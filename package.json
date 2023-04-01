@@ -1,7 +1,7 @@
 {
   "name": "extensions-vn",
   "version": "1.0.0",
-  "description": "The default source for Paperback, MangaDex",
+  "description": "The source for Hoang",
   "main": "index.js",
   "scripts": {
     "start": "tsc && node dist/api.js",
