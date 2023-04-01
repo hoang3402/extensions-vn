@@ -9,7 +9,8 @@
     "test": "node_modules/.bin/mocha --timeout 300000 -r ts-node/register src/**/*.test.ts",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
     "bundle": "paperback bundle",
-    "serve": "paperback serve"
+    "serve": "paperback serve",
+    "deploy": "gh-pages -d bundles"
   },
   "author": "Faizan Durrani",
   "license": "ISC",
@@ -21,6 +22,7 @@
     "typescript": "^4.7.2"
   },
   "dependencies": {
+    "gh-pages": "^5.0.0",
     "paperback-cli": "^2.0.0-alpha.13",
     "paperback-extensions-common": "^5.0.0-alpha.5"
   }
