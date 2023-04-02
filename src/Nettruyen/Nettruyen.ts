@@ -19,7 +19,7 @@ import {
 const DOMAIN = 'https://www.nettruyenvt.com';
 
 export const NettruyenInfo: SourceInfo = {
-    version: '1.0.1',
+    version: '1.0.3',
     name: 'NetTruyen',
     icon: 'icon.jpg',
     author: 'Hoang3409',
@@ -152,39 +152,76 @@ export class Nettruyen extends Source {
     }
 
     override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
-        try {
-            const request = createRequestObject({
-                url: DOMAIN,
-                param: chapterId,
-                method: "GET",
-            });
+        const request = createRequestObject({
+            url: DOMAIN,
+            param: chapterId,
+            method: "GET",
+        });
 
-            const data = await this.requestManager.schedule(request, 1);
-            let $ = this.cheerio.load(data.data);
+        const data = await this.requestManager.schedule(request, 1);
+        let $ = this.cheerio.load(data.data);
 
-            const pages: string[] = [];
-            for (let image of $('.page-chapter').toArray()) {
-                var link = $('div.page-chapter > img', image).attr('data-original')!;
-                if (link.indexOf('http') === -1) {//nếu link ko có 'http'
-                    pages.push('http:' + link);
-                } else {
-                    pages.push(link);
-                }
+        const pages: string[] = [];
+        for (let image of $('.page-chapter').toArray()) {
+            var link = $('div.page-chapter > img', image).attr('data-original')!;
+            if (link.indexOf('http') === -1) {//nếu link ko có 'http'
+                pages.push('http:' + link);
+            } else {
+                pages.push(link);
             }
-
-            return createChapterDetails({
-                pages: pages,
-                longStrip: false,
-                id: chapterId,
-                mangaId: mangaId,
-            });
-        } catch (e) {
-            throw new Error("Error: " + e);
         }
+
+        return createChapterDetails({
+            pages: pages,
+            longStrip: false,
+            id: chapterId,
+            mangaId: mangaId,
+        });
     }
 
     override async getSearchResults(query: SearchRequest, metadata: any): Promise<PagedResults> {
-        throw new Error("Method not implemented.");
+        const tiles: MangaTile[] = [];
+
+        const request = createRequestObject({
+            url: `${DOMAIN}/Comic/Services/SuggestSearch.ashx`,
+            param: `?q=${encodeURIComponent(query.title!)}`,
+            method: "GET",
+        });
+
+        let data: Response;
+        try {
+            data = await this.requestManager.schedule(request, 1);
+        } catch (error) {
+            console.log(`searchRequest failed with error: ${error}`);
+            return createPagedResults({
+                results: getServerUnavailableMangaTiles(),
+            });
+        }
+        let $ = this.cheerio.load(data.data);
+
+        for (let item of $('li').toArray()) {
+            tiles.push(createMangaTile({
+                id: $('a', item).attr('href')?.replace(`${DOMAIN}/truyen-tranh/`, '')!,
+                title: createIconText({ text: $('a > h3', item).text() }),
+                image: 'http:' + $('a > img', item).attr('src')!
+            }))
+        }
+
+        if (tiles.length == 0) {
+            tiles.push(createMangaTile({
+                id: '',
+                title: createIconText({ text: $('ul > li').toArray().toString() }),
+                image: ''
+            }));
+            return createPagedResults({
+                results: tiles
+            });
+        }
+
+        return createPagedResults({
+            results: tiles,
+            metadata: metadata,
+        });
     }
 
     override async getViewMoreItems(homepageSectionId: string, metadata: any): Promise<PagedResults> {
@@ -248,5 +285,9 @@ export class Nettruyen extends Source {
 
         return newUpdatedItems;
     }
+}
+
+function getServerUnavailableMangaTiles(): MangaTile[] {
+    throw new Error("Function not implemented.");
 }
 
