@@ -3,6 +3,7 @@ import {
     ChapterDetails,
     ContentRating,
     HomeSection,
+    LanguageCode,
     Manga,
     MangaTile,
     PagedResults,
@@ -15,7 +16,7 @@ import {
     TagType,
 } from "paperback-extensions-common";
 
-const DOMAIN = 'https://nettruyen.live/';
+const DOMAIN = 'https://www.nettruyenvt.com/';
 
 export const NettruyenInfo: SourceInfo = {
     version: '1.0.0',
@@ -85,22 +86,83 @@ export class Nettruyen extends Source {
         sectionCallback(newAdded);
     }
 
-    override getMangaDetails(mangaId: string): Promise<SourceManga | Manga> {
+    override async getMangaDetails(mangaId: string): Promise<SourceManga | Manga> {
+        try {
+            const url = `${DOMAIN}truyen-tranh/${mangaId}`;
+            const request = createRequestObject({
+                url: url,
+                method: "GET",
+            });
+            const data = await this.requestManager.schedule(request, 1);
+            let $ = this.cheerio.load(data.data);
+
+            var temp = $('#item-detail > div.detail-info > div > div.col-xs-4.col-image > img');
+            var image = 'http:' + temp.attr('src')!;
+            var titles = temp.attr('alt')!;
+            var des = $('#item-detail > div.detail-content > p').text();
+            // var rating = $('div.star').attr('data-rating')!;
+
+            return createManga({
+                id: mangaId,
+                author: "Nettruyen ăn cắp của ai đó",
+                artist: "test",
+                desc: des,
+                titles: [titles],
+                image: image,
+                status: 1,
+                rating: 5,
+                hentai: false,
+                tags: [],
+            });
+        } catch (e) {
+            throw new Error("Error: " + e);
+        }
+    }
+    override async getChapters(mangaId: string): Promise<Chapter[]> {
+        try {
+            let id = mangaId.split('-').at(-1)!;
+
+            const chapters: Chapter[] = [];
+
+            const request = createRequestObject({
+                url: 'https://www.nettruyenvt.com/Comic/Services/ComicService.asmx/ProcessChapterList',
+                param: `?comicId=${id}`,
+                method: "GET",
+            });
+
+            const data = await this.requestManager.schedule(request, 1);
+
+            let list = typeof data.data === "string"
+                ? JSON.parse(data.data)
+                : data.data;
+
+            for (let chapter of list.chapters) {
+                chapters.push(
+                    createChapter({
+                        id: String(chapter.chapterId),
+                        name: chapter.name,
+                        mangaId: id,
+                        chapNum: Number.parseInt(String(chapter.name).split(' ').at(-1)!),
+                        langCode: LanguageCode.VIETNAMESE
+                    })
+                )
+            }
+
+            return chapters;
+        } catch (e) {
+            throw new Error("Error: " + e);
+        }
+    }
+    override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
         throw new Error("Method not implemented.");
     }
-    override getChapters(mangaId: string): Promise<Chapter[]> {
-        throw new Error("Method not implemented.");
-    }
-    override getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
-        throw new Error("Method not implemented.");
-    }
-    override getSearchResults(query: SearchRequest, metadata: any): Promise<PagedResults> {
+    override async getSearchResults(query: SearchRequest, metadata: any): Promise<PagedResults> {
         throw new Error("Method not implemented.");
     }
 
     parseNewUpdatedSection($: any): MangaTile[] {
         let newUpdatedItems: MangaTile[] = [];
-        for (let manga of $('div.item', 'div.row').toArray().splice(0, 20)) {
+        for (let manga of $('div.item', 'div.row').toArray().splice(0, 10)) {
             const title = $('figure.clearfix > figcaption > h3 > a', manga).first().text();
             const id = $('figure.clearfix > div.image > a', manga).attr('href')?.split('/').pop();
             const image = $('figure.clearfix > div.image > a > img', manga).first().attr('data-original');
