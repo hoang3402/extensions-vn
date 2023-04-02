@@ -16,10 +16,10 @@ import {
     TagType,
 } from "paperback-extensions-common";
 
-const DOMAIN = 'https://www.nettruyenvt.com/';
+const DOMAIN = 'https://www.nettruyenvt.com';
 
 export const NettruyenInfo: SourceInfo = {
-    version: '1.0.0',
+    version: '1.0.1',
     name: 'NetTruyen',
     icon: 'icon.jpg',
     author: 'Hoang3409',
@@ -46,14 +46,12 @@ export class Nettruyen extends Source {
         requestTimeout: 20000,
         interceptor: {
             interceptRequest: async (request: Request): Promise<Request> => {
-
                 request.headers = {
                     ...(request.headers ?? {}),
                     ...{
                         'referer': DOMAIN
                     }
                 }
-
                 return request
             },
 
@@ -88,7 +86,7 @@ export class Nettruyen extends Source {
 
     override async getMangaDetails(mangaId: string): Promise<SourceManga | Manga> {
         try {
-            const url = `${DOMAIN}truyen-tranh/${mangaId}`;
+            const url = `${DOMAIN}/truyen-tranh/${mangaId}`;
             const request = createRequestObject({
                 url: url,
                 method: "GET",
@@ -100,14 +98,15 @@ export class Nettruyen extends Source {
             var image = 'http:' + temp.attr('src')!;
             var titles = temp.attr('alt')!;
             var des = $('#item-detail > div.detail-content > p').text();
+            var id = $('#item-detail > div.detail-info > div > div.col-xs-8.col-info > div.row.rating > div:nth-child(1) > div').attr('data-id')!;
             // var rating = $('div.star').attr('data-rating')!;
 
             return createManga({
-                id: mangaId,
+                id: id,
                 author: "Nettruyen ăn cắp của ai đó",
-                artist: "test",
+                artist: 'chịu á',
                 desc: des,
-                titles: [titles],
+                titles: [titles, id],
                 image: image,
                 status: 1,
                 rating: 5,
@@ -120,13 +119,11 @@ export class Nettruyen extends Source {
     }
     override async getChapters(mangaId: string): Promise<Chapter[]> {
         try {
-            let id = mangaId.split('-').at(-1)!;
-
             const chapters: Chapter[] = [];
 
             const request = createRequestObject({
                 url: 'https://www.nettruyenvt.com/Comic/Services/ComicService.asmx/ProcessChapterList',
-                param: `?comicId=${id}`,
+                param: `?comicId=${mangaId}`,
                 method: "GET",
             });
 
@@ -139,10 +136,10 @@ export class Nettruyen extends Source {
             for (let chapter of list.chapters) {
                 chapters.push(
                     createChapter({
-                        id: String(chapter.chapterId),
+                        id: chapter.url,
                         name: chapter.name,
-                        mangaId: id,
-                        chapNum: Number.parseInt(String(chapter.name).split(' ').at(-1)!),
+                        mangaId: mangaId,
+                        chapNum: Number.parseInt(String(chapter.name).split(' ').at(1)!),
                         langCode: LanguageCode.VIETNAMESE
                     })
                 )
@@ -154,7 +151,35 @@ export class Nettruyen extends Source {
         }
     }
     override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
-        throw new Error("Method not implemented.");
+        try {
+            const request = createRequestObject({
+                url: DOMAIN,
+                param: chapterId,
+                method: "GET",
+            });
+
+            const data = await this.requestManager.schedule(request, 1);
+            let $ = this.cheerio.load(data.data);
+
+            const pages: string[] = [];
+            for (let image of $('.page-chapter').toArray()) {
+                var link = $('div.page-chapter > img', image).attr('data-original')!;
+                if (link.indexOf('http') === -1) {//nếu link ko có 'http'
+                    pages.push('http:' + link);
+                } else {
+                    pages.push(link);
+                }
+            }
+
+            return createChapterDetails({
+                pages: pages,
+                longStrip: false,
+                id: chapterId,
+                mangaId: mangaId,
+            });
+        } catch (e) {
+            throw new Error("Error: " + e);
+        }
     }
     override async getSearchResults(query: SearchRequest, metadata: any): Promise<PagedResults> {
         throw new Error("Method not implemented.");
