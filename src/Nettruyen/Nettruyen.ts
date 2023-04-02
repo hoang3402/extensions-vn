@@ -40,7 +40,6 @@ export const NettruyenInfo: SourceInfo = {
 }
 
 export class Nettruyen extends Source {
-
     requestManager = createRequestManager({
         requestsPerSecond: 5,
         requestTimeout: 20000,
@@ -64,7 +63,7 @@ export class Nettruyen extends Source {
     override async getHomePageSections(sectionCallback: (section: HomeSection) => void): Promise<void> {
         let newAdded: HomeSection = createHomeSection({
             id: 'new_added',
-            title: "Truyện Mới Thêm Gần Đây",
+            title: "Truyện Mới Thêm",
             view_more: true,
         });
 
@@ -117,6 +116,7 @@ export class Nettruyen extends Source {
             throw new Error("Error: " + e);
         }
     }
+
     override async getChapters(mangaId: string): Promise<Chapter[]> {
         try {
             const chapters: Chapter[] = [];
@@ -150,6 +150,7 @@ export class Nettruyen extends Source {
             throw new Error("Error: " + e);
         }
     }
+
     override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
         try {
             const request = createRequestObject({
@@ -181,12 +182,56 @@ export class Nettruyen extends Source {
             throw new Error("Error: " + e);
         }
     }
+
     override async getSearchResults(query: SearchRequest, metadata: any): Promise<PagedResults> {
         throw new Error("Method not implemented.");
     }
 
+    override async getViewMoreItems(homepageSectionId: string, metadata: any): Promise<PagedResults> {
+        const page: number = metadata?.page ?? 1;
+
+        switch (homepageSectionId) {
+            case 'new_added':
+                break;
+            default:
+                throw new Error('Làm gì có page này?!');
+        }
+
+        const request = createRequestObject({
+            url: `${DOMAIN}/tim-truyen-nang-cao`,
+            param: `?page=${page}`,
+            method: "GET",
+        });
+
+        const data = await this.requestManager.schedule(request, 1);
+        const $ = this.cheerio.load(data.data);
+        const tiles: MangaTile[] = [];
+
+        for (let manga of $('div.item', 'div.row').toArray()) {
+            const title = $('figure.clearfix > figcaption > h3 > a', manga).first().text();
+            const id = $('figure.clearfix > div.image > a', manga).attr('href')?.split('/').pop();
+            const image = $('figure.clearfix > div.image > a > img', manga).first().attr('data-original');
+            const subtitle = $("figure.clearfix > figcaption > ul > li.chapter:nth-of-type(1) > a", manga).last().text().trim();
+            if (!id || !title) continue;
+            tiles.push(createMangaTile({
+                id: id,
+                image: !image ? "https://i.imgur.com/GYUxEX8.png" : 'http:' + image,
+                title: createIconText({ text: title }),
+                subtitleText: createIconText({ text: subtitle }),
+            }));
+        }
+
+        metadata = tiles.length === 0 ? undefined : { page: page + 1 };
+
+        return createPagedResults({
+            results: tiles,
+            metadata: metadata,
+        });
+    }
+
     parseNewUpdatedSection($: any): MangaTile[] {
         let newUpdatedItems: MangaTile[] = [];
+
         for (let manga of $('div.item', 'div.row').toArray().splice(0, 10)) {
             const title = $('figure.clearfix > figcaption > h3 > a', manga).first().text();
             const id = $('figure.clearfix > div.image > a', manga).attr('href')?.split('/').pop();
