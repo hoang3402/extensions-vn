@@ -1,5 +1,4 @@
 import { Nettruyen } from "./Nettruyen";
-// import assert from "assert";
 import {
     Source,
     SearchRequest,
@@ -7,7 +6,7 @@ import {
 import * as cheerio from 'cheerio';
 import { expect } from "chai";
 
-describe("Nettruyen", function () {
+describe("NetTruyen", function () {
     let source: Source;
     let nettruyen: Nettruyen;
 

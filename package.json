@@ -1,6 +1,6 @@
 {
   "name": "extensions-vn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The source for Hoang",
   "main": "index.js",
   "scripts": {
