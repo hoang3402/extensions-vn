@@ -73,7 +73,6 @@ export class HentaiVN extends Source {
 
         //Load empty sections
         sectionCallback(newAdded);
-
         //New Updates
         let request = createRequestObject({
             url: `${DOMAIN}/list-new2.php`,
@@ -83,17 +82,17 @@ export class HentaiVN extends Source {
         let data = await this.requestManager.schedule(request, 1);
         let $ = this.cheerio.load(data.data);
 
-        newAdded.items = this.parseNewUpdatedSection($);
+        newAdded.items = await this.parseNewUpdatedSection($);
         sectionCallback(newAdded);
     }
-    parseNewUpdatedSection($: any): import("paperback-extensions-common").MangaTile[] {
+    async parseNewUpdatedSection($: any): Promise<import("paperback-extensions-common").MangaTile[]> {
         const items: MangaTile[] = [];
 
         for (let item of $('ul.page-random').toArray()) {
             items.push(createMangaTile({
                 id: $('div.img-same > a', item).attr('href'),
-                title: createIconText({ text: '' }),
-                image: ""
+                title: createIconText({ text: $('b', item).first().text() }),
+                image: $('div[style*=background]', item).attr('style').match(/background:url\((.+)\);/)[1]
             }))
         }
 
