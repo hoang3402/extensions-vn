@@ -1,10 +1,10 @@
 import { Nettruyen } from "./Nettruyen";
-import assert from "assert";
+// import assert from "assert";
 import {
     Source,
-    Chapter
 } from "paperback-extensions-common";
 import * as cheerio from 'cheerio';
+import { expect } from "chai";
 
 describe("Nettruyen", function () {
     let source: Source;
@@ -16,13 +16,10 @@ describe("Nettruyen", function () {
     });
 
     describe("getChapters()", function () {
-        it("should return an array of chapters", async function () {
-            const chapters = await nettruyen.getChapters("my-manga-id");
-            assert(Array.isArray(chapters));
-            assert(chapters.length > 0);
-
-            const chapter = chapters[0];
-            console.log(chapter);
-        });
+        it('Get Chapter', async () => {
+            const data = await nettruyen.getChapters("60533");
+            expect(data, 'Null').to.be.not.empty
+            console.log('Done');
+        })
     });
 });

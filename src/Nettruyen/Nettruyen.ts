@@ -12,7 +12,6 @@ import {
     SearchRequest,
     Source,
     SourceInfo,
-    SourceManga,
     TagType,
 } from "paperback-extensions-common";
 
@@ -83,7 +82,7 @@ export class Nettruyen extends Source {
         sectionCallback(newAdded);
     }
 
-    override async getMangaDetails(mangaId: string): Promise<SourceManga | Manga> {
+    override async getMangaDetails(mangaId: string): Promise<Manga> {
         try {
             const url = `${DOMAIN}/truyen-tranh/${mangaId}`;
             const request = createRequestObject({
@@ -118,37 +117,33 @@ export class Nettruyen extends Source {
     }
 
     override async getChapters(mangaId: string): Promise<Chapter[]> {
-        try {
-            const chapters: Chapter[] = [];
+        const chapters: Chapter[] = [];
 
-            const request = createRequestObject({
-                url: 'https://www.nettruyenvt.com/Comic/Services/ComicService.asmx/ProcessChapterList',
-                param: `?comicId=${mangaId}`,
-                method: "GET",
-            });
+        const request = createRequestObject({
+            url: 'https://www.nettruyenvt.com/Comic/Services/ComicService.asmx/ProcessChapterList',
+            param: `?comicId=${mangaId}`,
+            method: "GET",
+        });
 
-            const data = await this.requestManager.schedule(request, 1);
+        const data = await this.requestManager.schedule(request, 1);
 
-            let list = typeof data.data === "string"
-                ? JSON.parse(data.data)
-                : data.data;
+        let list = typeof data.data === "string"
+            ? JSON.parse(data.data)
+            : data.data;
 
-            for (let chapter of list.chapters) {
-                chapters.push(
-                    createChapter({
-                        id: chapter.url,
-                        name: chapter.name,
-                        mangaId: mangaId,
-                        chapNum: Number.parseInt(String(chapter.name).split(' ').at(1)!),
-                        langCode: LanguageCode.VIETNAMESE
-                    })
-                )
-            }
-
-            return chapters;
-        } catch (e) {
-            throw new Error("Error: " + e);
+        for (let chapter of list.chapters) {
+            chapters.push(
+                createChapter({
+                    id: chapter.url,
+                    name: chapter.name,
+                    mangaId: mangaId,
+                    chapNum: Number.parseInt(String(chapter.name).split(' ').at(1)!),
+                    langCode: LanguageCode.VIETNAMESE
+                })
+            )
         }
+
+        return chapters;
     }
 
     override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
