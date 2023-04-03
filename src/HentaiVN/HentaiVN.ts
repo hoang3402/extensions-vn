@@ -17,7 +17,7 @@ import {
 const DOMAIN = "https://hentaivn.tv";
 
 export const HentaiVNInfo: SourceInfo = {
-    version: "1.0.1",
+    version: "1.0.2",
     name: "HentaiVN",
     icon: "icon.png",
     author: "Hoang3409",
