@@ -16,15 +16,19 @@ import {
 
 const DOMAIN = "https://hentaivn.tv";
 
-export const NettruyenInfo: SourceInfo = {
-    version: "1.0.0",
+export const HentaiVNInfo: SourceInfo = {
+    version: "1.0.1",
     name: "HentaiVN",
-    icon: "icon.jpg",
+    icon: "icon.png",
     author: "Hoang3409",
+    authorWebsite: 'https://github.com/hoang3402',
     description: "Extension that pulls manga from HentaiVN.",
     contentRating: ContentRating.ADULT,
     websiteBaseURL: DOMAIN,
-    sourceTags: [{ text: 'Hentai', type: TagType.RED }]
+    sourceTags: [{
+        text: 'Hentai',
+        type: TagType.RED
+    }]
 }
 
 export class HentaiVN extends Source {
