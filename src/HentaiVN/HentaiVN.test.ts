@@ -31,4 +31,11 @@ describe("HentaiVN", function () {
             // console.debug(data);
         })
     })
+    describe("getViewMoreItems()", function () {
+        it('Get View More Items', async () => {
+            var data = await hentaivn.getViewMoreItems('new_added', '');
+            expect(data, 'Null').to.be.not.empty
+            // console.debug(data);
+        })
+    })
 })
