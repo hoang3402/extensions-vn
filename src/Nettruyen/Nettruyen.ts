@@ -282,7 +282,14 @@ export class Nettruyen extends Source {
     }
 }
 
-function getServerUnavailableMangaTiles(): MangaTile[] {
-    throw new Error("Function not implemented.");
+export function getServerUnavailableMangaTiles(): MangaTile[] {
+    // This tile is used as a placeholder when the server is unavailable
+    return [
+        createMangaTile({
+            id: "placeholder-id",
+            title: createIconText({ text: "Server" }),
+            image: "",
+            subtitleText: createIconText({ text: "unavailable" }),
+        }),
+    ];
 }
-

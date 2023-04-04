@@ -13,13 +13,14 @@ import {
     ContentRating,
     TagType,
     MangaStatus,
-    LanguageCode
+    LanguageCode,
+    TagSection
 } from "paperback-extensions-common";
 
 const DOMAIN = "https://hentaivn.tv";
 
 export const HentaiVNInfo: SourceInfo = {
-    version: "1.0.6",
+    version: "1.0.7",
     name: "HentaiVN",
     icon: "icon.png",
     author: "Hoang3409",
@@ -175,5 +176,36 @@ export class HentaiVN extends Source {
             results: tiles,
             metadata: metadata,
         });
+    }
+    override async getSearchTags(): Promise<TagSection[]> {
+        // This function is called on the homepage and should not throw if the server is unavailable
+        let genresResponse: Response
+
+        try {
+            const request = createRequestObject({
+                url: `${DOMAIN}/tag_box.php`,
+                method: "GET"
+            })
+            genresResponse = await this.requestManager.schedule(request, 1);
+        } catch (e) {
+            console.log(`getTags failed with error: ${e}`);
+            return [
+                createTagSection({ id: "-1", label: "Server unavailable", tags: [] }),
+            ];
+        }
+
+        const genresResult = this.cheerio.load(genresResponse.data);
+        const tagSections: TagSection[] = [
+            createTagSection({ id: "0", label: "Thể loại", tags: [] })
+        ];
+
+        for (const item of genresResult('li').toArray()) {
+            tagSections[0]!.tags.push(createTag({
+                id: genresResult('a', item).attr('href').split('-')[2],
+                label: genresResult('a', item).text()
+            }))
+        }
+
+        return tagSections;
     }
 }
