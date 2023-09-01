@@ -8,7 +8,7 @@ import {
 } from '../Main'
 
 const HOST = 'NetTruyen'
-const Domain = 'www.nettruyenmax.com'
+const Domain = 'www.nettruyenus.com'
 import tags from './tags.json'
 
 export const NettruyenInfo: SourceInfo = {
