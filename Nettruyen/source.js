@@ -754,7 +754,7 @@ exports.Nettruyen = exports.NettruyenInfo = void 0;
 const types_1 = require("@paperback/types");
 const Main_1 = require("../Main");
 const HOST = 'NetTruyen';
-const Domain = 'www.nettruyenmax.com';
+const Domain = 'www.nettruyenus.com';
 const tags_json_1 = __importDefault(require("./tags.json"));
 exports.NettruyenInfo = {
     description: '',
