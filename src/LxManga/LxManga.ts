@@ -1,4 +1,5 @@
 import {
+    BadgeColor,
     ContentRating,
     SourceInfo
 } from '@paperback/types'
@@ -18,7 +19,13 @@ export const LxMangaInfo: SourceInfo = {
     name: ' LxManga',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: ContentRating.ADULT
+    contentRating: ContentRating.ADULT,
+    sourceTags: [
+        {
+            text: '18+',
+            type: BadgeColor.YELLOW
+        }
+    ]
 }
 
 export class LxManga extends Main {

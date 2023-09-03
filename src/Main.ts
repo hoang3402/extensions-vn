@@ -12,9 +12,6 @@ import {
     SearchRequest,
     SearchResultsProviding,
     SourceManga,
-    DUISection,
-    SourceStateManager,
-    DUINavigationButton,
     PartialSourceManga,
     TagSection,
     Tag
@@ -67,34 +64,6 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     
 
     stateManager = App.createSourceStateManager()
-
-    async getSourceMenu(): Promise<DUISection> {
-        return App.createDUISection({
-            id: 'sourceMenu',
-            header: 'Source Menu',
-            isHidden: false,
-            rows: async () => [
-                this.sourceSettings(this.stateManager)
-            ]
-        })
-    }
-
-    sourceSettings = (stateManager: SourceStateManager): DUINavigationButton => {
-        return App.createDUINavigationButton({
-            id: 'nettruyen_settings',
-            label: 'Source Settings',
-            form: App.createDUIForm({
-                sections: async () => [
-                    App.createDUISection({
-                        id: 'what_thumb',
-                        isHidden: false,
-                        footer: 'Test DUI',
-                        rows: async () => []
-                    })
-                ]
-            })
-        })
-    }
 
     async getHomePageSections(sectionCallback: (section: HomeSection) => void): Promise<void> {
         const sections = []
@@ -183,8 +152,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         }
         if (data.genres) {
             for (const item of data.genres) {
-            const foundGenre = this.Tags.find((genre: any) => genre.Id === item.toString())
-            if (foundGenre) {
+                const foundGenre = this.Tags.find((genre: any) => genre.Id === item.toString())
+                if (foundGenre) {
                     tags.push(App.createTag({
                         id: foundGenre.Id, 
                         label: foundGenre.Name
