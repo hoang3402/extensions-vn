@@ -2,19 +2,34 @@ import {
     ContentRating,
     SourceInfo,
     BadgeColor,
+    RequestManager, 
+    Request, 
+    Response,
+    DUIForm,
     DUISection,
-    SourceStateManager
+    MangaProgress,
+    MangaProgressProviding,
+    TrackerActionQueue
 } from '@paperback/types'
 import {
-    getExportVersion, 
+    DOMAIN,
+    getExportVersion,
     Main
 } from '../Main'
+import {
+    Credentials,
+    clearSessionToken,
+    clearUserCredentials,
+    getSessionToken,
+    getUserCredentials,
+    setSessionToken,
+    setUserCredentials,
+    validateCredentials
+} from './NettruyenAuth'
 
 const HOST = 'NetTruyen'
 const Domain = 'www.nettruyenus.com'
 import tags from './tags.json'
-const STATE_SESSION = 'token'
-const STATE_CREDENTIALS = 'credentials'
 
 export const NettruyenInfo: SourceInfo = {
     description: '',
@@ -33,67 +48,7 @@ export const NettruyenInfo: SourceInfo = {
     ]
 }
 
-export interface Credentials {
-    email: string;
-    password: string;
-}
-
-export function validateCredentials(credentials: unknown): credentials is Credentials {
-    return (
-        credentials != null &&
-        typeof credentials === 'object' &&
-        (credentials as Credentials).password !== '' &&
-        (credentials as Credentials).email !== ''
-    )
-}
-
-export async function getUserCredentials(stateManager: SourceStateManager): Promise<Credentials | undefined> {
-    const credentialsString = await stateManager.keychain.retrieve(STATE_CREDENTIALS)
-    if (typeof credentialsString !== 'string') {
-        return undefined
-    }
-
-    const credentials = JSON.parse(credentialsString)
-    if (!validateCredentials(credentials)) {
-        console.log('store contains invalid credentials!')
-        return undefined
-    }
-
-    return credentials
-}
-
-export async function setUserCredentials(stateManager: SourceStateManager, credentials: Credentials): Promise<void> {
-    if (!validateCredentials(credentials)) {
-        console.log(`tried to store invalid mu_credentials: ${JSON.stringify(credentials)}`)
-        throw new Error('tried to store invalid mu_credentials')
-    }
-
-    await stateManager.keychain.store(STATE_CREDENTIALS, JSON.stringify(credentials))
-}
-
-export async function clearUserCredentials(stateManager: SourceStateManager): Promise<void> {
-    await stateManager.keychain.store(STATE_CREDENTIALS, undefined)
-}
-
-export async function getSessionToken(stateManager: SourceStateManager): Promise<string | undefined> {
-    const sessionToken = await stateManager.keychain.retrieve(STATE_SESSION)
-    return typeof sessionToken === 'string' ? sessionToken : undefined
-}
-
-export async function setSessionToken(stateManager: SourceStateManager, sessionToken: string): Promise<void> {
-    if (typeof sessionToken !== 'string') {
-        console.log(`tried to store invalid token: ${sessionToken}`)
-        throw new Error('tried to store invalid token')
-    }
-
-    await stateManager.keychain.store(STATE_SESSION, sessionToken)
-}
-
-export async function clearSessionToken(stateManager: SourceStateManager): Promise<void> {
-    await stateManager.keychain.store(STATE_SESSION, undefined)
-}
-
-export class Nettruyen extends Main {
+export class Nettruyen extends Main implements MangaProgressProviding{
     Host = HOST
     Tags = tags
 
@@ -103,6 +58,30 @@ export class Nettruyen extends Main {
     SearchWithGenres = true
     SearchWithNotGenres = true
     SearchWithTitleAndGenre = true
+
+    override requestManager: RequestManager = App.createRequestManager({
+        requestsPerSecond: this.requestsPerSecond,
+        requestTimeout: this.requestTimeout,
+        interceptor: {
+            interceptRequest: async (request: Request): Promise<Request> => {
+
+                request.headers = {
+                    ...(request.headers ?? {}),
+                    ...{
+                        'referer': this.HostDomain
+                    },
+                    ...(await getSessionToken(this.stateManager) != null ? {
+                        'authorization': `Bearer ${await getSessionToken(this.stateManager)}`
+                    } : {})
+                }
+
+                return request
+            },
+            interceptResponse: async (response: Response): Promise<Response> => {
+                return response
+            }
+        }
+    })
 
     async getSourceMenu(): Promise<DUISection> {
         return App.createDUISection({
@@ -210,5 +189,82 @@ export class Nettruyen extends Main {
 
     private async logout(): Promise<void> {
         await Promise.all([clearUserCredentials(this.stateManager), clearSessionToken(this.stateManager)])
+    }
+
+    async getMangaProgress(mangaId: string): Promise<MangaProgress | undefined> {
+        const logPrefix = '[getMangaProgress]'
+        console.log(`${logPrefix} starts`)
+        try {
+            console.log(`${logPrefix} loading id=${mangaId}`)
+
+            const request = await this.requestManager.schedule(App.createRequest({
+                url: `${DOMAIN}Service/GetProcess?idComic=${mangaId}`,
+                method: 'GET'
+            }), 1)
+            const result = typeof request.data === 'string' ? JSON.parse(request.data) : request.data
+
+            if (!result) return undefined 
+            
+            const progress = App.createMangaProgress({
+                mangaId: mangaId,
+                lastReadChapterNumber: result.currentChapterNumber ?? 0
+            })
+
+            console.log(`${logPrefix} complete`)
+            return progress
+        } catch (ex) {
+            console.log(`${logPrefix} error`)
+            console.log(ex)
+            throw ex
+        }
+    }
+
+    async getMangaProgressManagementForm(mangaId: string): Promise<DUIForm> {
+        return App.createDUIForm({
+            sections: async () => {
+                const [credentials] = await Promise.all([
+                    getUserCredentials(this.stateManager)
+                ])
+                
+                if (credentials == null) {
+                    return [
+                        App.createDUISection({
+                            id: 'notLoggedInSection',
+                            isHidden: false,
+                            rows: async () => [
+                                App.createDUILabel({
+                                    id: 'notLoggedIn',
+                                    label: 'Not Logged In'
+                                })
+                            ]
+                        })
+                    ]
+                }
+
+                return [
+                    App.createDUISection({
+                        id: 'userInfo',
+                        isHidden: false,
+                        rows: async () => [
+                            App.createDUIHeader({
+                                id: 'header',
+                                imageUrl: '',
+                                title: credentials.email ?? 'NOT LOGGED IN',
+                                subtitle: ''
+                            })
+                        ]
+                    })
+                ]
+            }
+        })
+    }
+
+    async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void> {
+        // console.log(actionQueue.queuedChapterReadActions())
+        const chapterReadActions = await actionQueue.queuedChapterReadActions()
+        for (const readAction of chapterReadActions) {
+            console.log(readAction.mangaId)
+        }
+        return Promise.resolve(undefined)
     }
 }

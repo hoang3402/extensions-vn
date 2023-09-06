@@ -18,7 +18,7 @@ import {
 } from '@paperback/types'
 import {convertTime} from './utils/time'
 
-const DOMAIN = 'https://hoang3409.link/api/'
+export const DOMAIN = 'https://hoang3409.link/api/'
 
 const BASE_VERSION = '1.3.2'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
@@ -30,7 +30,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     }
 
     requestsPerSecond = 5
-    requestTimeout = 20000
+    requestTimeout = 20_000
 
     requestManager: RequestManager = App.createRequestManager({
         requestsPerSecond: this.requestsPerSecond,
