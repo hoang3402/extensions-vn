@@ -1357,9 +1357,9 @@ module.exports=[
 },{}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Main = exports.getExportVersion = void 0;
+exports.Main = exports.getExportVersion = exports.DOMAIN = void 0;
 const time_1 = require("./utils/time");
-const DOMAIN = 'https://hoang3409.link/api/';
+exports.DOMAIN = 'https://hoang3409.link/api/';
 const BASE_VERSION = '1.3.2';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
@@ -1389,32 +1389,6 @@ class Main {
             }
         });
         this.stateManager = App.createSourceStateManager();
-        this.sourceSettings = (stateManager) => {
-            return App.createDUINavigationButton({
-                id: 'nettruyen_settings',
-                label: 'Source Settings',
-                form: App.createDUIForm({
-                    sections: async () => [
-                        App.createDUISection({
-                            id: 'what_thumb',
-                            isHidden: false,
-                            footer: 'Test DUI',
-                            rows: async () => []
-                        })
-                    ]
-                })
-            });
-        };
-    }
-    async getSourceMenu() {
-        return App.createDUISection({
-            id: 'sourceMenu',
-            header: 'Source Menu',
-            isHidden: false,
-            rows: async () => [
-                this.sourceSettings(this.stateManager)
-            ]
-        });
     }
     async getHomePageSections(sectionCallback) {
         const sections = [];
@@ -1431,7 +1405,7 @@ class Main {
             let apiPath, params;
             switch (section.id) {
                 default:
-                    apiPath = `${DOMAIN}${this.Host}`;
+                    apiPath = `${exports.DOMAIN}${this.Host}`;
                     params = '?page=1';
                     break;
             }
@@ -1460,7 +1434,7 @@ class Main {
     async getViewMoreItems(homepageSectionId, metadata) {
         const page = metadata?.page ?? 1;
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}`,
+            url: `${exports.DOMAIN}${this.Host}`,
             param: `?page=${page}`,
             method: 'GET'
         });
@@ -1485,7 +1459,7 @@ class Main {
     async getMangaDetails(mangaId) {
         // mangaId like "gokusotsu-kraken-72204"
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+            url: `${exports.DOMAIN}${this.Host}/Manga?url=${mangaId}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -1519,7 +1493,7 @@ class Main {
     }
     async getChapters(mangaId) {
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/Chapter`,
+            url: `${exports.DOMAIN}${this.Host}/Chapter`,
             param: `?url=${mangaId}`,
             method: 'GET'
         });
@@ -1538,7 +1512,7 @@ class Main {
     }
     async getChapterDetails(mangaId, chapterId) {
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/ChapterDetail`,
+            url: `${exports.DOMAIN}${this.Host}/ChapterDetail`,
             param: `?url=${chapterId}`,
             method: 'GET'
         });
@@ -1581,7 +1555,7 @@ class Main {
         }
         const request = App.createRequest({
             method: 'POST',
-            url: `${DOMAIN}${this.Host}/Search`,
+            url: `${exports.DOMAIN}${this.Host}/Search`,
             data: postData,
             headers: {
                 'Content-Type': 'application/json'

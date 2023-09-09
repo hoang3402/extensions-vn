@@ -460,9 +460,9 @@ __exportStar(require("./compat/DyamicUI"), exports);
 },{"./base/index":7,"./compat/DyamicUI":16,"./generated/_exports":60}],62:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Main = exports.getExportVersion = void 0;
+exports.Main = exports.getExportVersion = exports.DOMAIN = void 0;
 const time_1 = require("./utils/time");
-const DOMAIN = 'https://hoang3409.link/api/';
+exports.DOMAIN = 'https://hoang3409.link/api/';
 const BASE_VERSION = '1.3.2';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
@@ -492,32 +492,6 @@ class Main {
             }
         });
         this.stateManager = App.createSourceStateManager();
-        this.sourceSettings = (stateManager) => {
-            return App.createDUINavigationButton({
-                id: 'nettruyen_settings',
-                label: 'Source Settings',
-                form: App.createDUIForm({
-                    sections: async () => [
-                        App.createDUISection({
-                            id: 'what_thumb',
-                            isHidden: false,
-                            footer: 'Test DUI',
-                            rows: async () => []
-                        })
-                    ]
-                })
-            });
-        };
-    }
-    async getSourceMenu() {
-        return App.createDUISection({
-            id: 'sourceMenu',
-            header: 'Source Menu',
-            isHidden: false,
-            rows: async () => [
-                this.sourceSettings(this.stateManager)
-            ]
-        });
     }
     async getHomePageSections(sectionCallback) {
         const sections = [];
@@ -534,7 +508,7 @@ class Main {
             let apiPath, params;
             switch (section.id) {
                 default:
-                    apiPath = `${DOMAIN}${this.Host}`;
+                    apiPath = `${exports.DOMAIN}${this.Host}`;
                     params = '?page=1';
                     break;
             }
@@ -563,7 +537,7 @@ class Main {
     async getViewMoreItems(homepageSectionId, metadata) {
         const page = metadata?.page ?? 1;
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}`,
+            url: `${exports.DOMAIN}${this.Host}`,
             param: `?page=${page}`,
             method: 'GET'
         });
@@ -588,7 +562,7 @@ class Main {
     async getMangaDetails(mangaId) {
         // mangaId like "gokusotsu-kraken-72204"
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+            url: `${exports.DOMAIN}${this.Host}/Manga?url=${mangaId}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -622,7 +596,7 @@ class Main {
     }
     async getChapters(mangaId) {
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/Chapter`,
+            url: `${exports.DOMAIN}${this.Host}/Chapter`,
             param: `?url=${mangaId}`,
             method: 'GET'
         });
@@ -641,7 +615,7 @@ class Main {
     }
     async getChapterDetails(mangaId, chapterId) {
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/ChapterDetail`,
+            url: `${exports.DOMAIN}${this.Host}/ChapterDetail`,
             param: `?url=${chapterId}`,
             method: 'GET'
         });
@@ -684,7 +658,7 @@ class Main {
         }
         const request = App.createRequest({
             method: 'POST',
-            url: `${DOMAIN}${this.Host}/Search`,
+            url: `${exports.DOMAIN}${this.Host}/Search`,
             data: postData,
             headers: {
                 'Content-Type': 'application/json'
@@ -744,7 +718,7 @@ class Main {
 }
 exports.Main = Main;
 
-},{"./utils/time":65}],63:[function(require,module,exports){
+},{"./utils/time":66}],63:[function(require,module,exports){
 "use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -753,6 +727,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Nettruyen = exports.NettruyenInfo = void 0;
 const types_1 = require("@paperback/types");
 const Main_1 = require("../Main");
+const NettruyenAuth_1 = require("./NettruyenAuth");
 const HOST = 'NetTruyen';
 const Domain = 'www.nettruyenus.com';
 const tags_json_1 = __importDefault(require("./tags.json"));
@@ -760,11 +735,17 @@ exports.NettruyenInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.2.3'),
+    version: (0, Main_1.getExportVersion)('0.2.4'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: types_1.ContentRating.EVERYONE
+    contentRating: types_1.ContentRating.EVERYONE,
+    sourceTags: [
+        {
+            text: '16+',
+            type: types_1.BadgeColor.GREEN
+        }
+    ]
 };
 class Nettruyen extends Main_1.Main {
     constructor() {
@@ -776,11 +757,259 @@ class Nettruyen extends Main_1.Main {
         this.SearchWithGenres = true;
         this.SearchWithNotGenres = true;
         this.SearchWithTitleAndGenre = true;
+        this.requestManager = App.createRequestManager({
+            requestsPerSecond: this.requestsPerSecond,
+            requestTimeout: this.requestTimeout,
+            interceptor: {
+                interceptRequest: async (request) => {
+                    request.headers = {
+                        ...(request.headers ?? {}),
+                        ...{
+                            'referer': this.HostDomain
+                        },
+                        ...(await (0, NettruyenAuth_1.getSessionToken)(this.stateManager) != null ? {
+                            'authorization': `Bearer ${await (0, NettruyenAuth_1.getSessionToken)(this.stateManager)}`
+                        } : {})
+                    };
+                    return request;
+                },
+                interceptResponse: async (response) => {
+                    return response;
+                }
+            }
+        });
+    }
+    async getSourceMenu() {
+        return App.createDUISection({
+            id: 'sourceMenu',
+            isHidden: false,
+            rows: async () => {
+                const [credentials] = await Promise.all([
+                    (0, NettruyenAuth_1.getUserCredentials)(this.stateManager)
+                ]);
+                if (credentials?.email) {
+                    return [
+                        App.createDUILabel({
+                            id: 'userInfo',
+                            label: 'Logged as',
+                            value: credentials.email
+                        }),
+                        App.createDUIButton({
+                            id: 'logout',
+                            label: 'Logout',
+                            onTap: async () => this.logout()
+                        })
+                    ];
+                }
+                return [
+                    App.createDUINavigationButton({
+                        id: 'loginButton',
+                        label: 'Login',
+                        form: App.createDUIForm({
+                            sections: async () => [
+                                App.createDUISection({
+                                    id: 'usernameSection',
+                                    header: 'Email',
+                                    footer: 'Enter your email',
+                                    isHidden: false,
+                                    rows: async () => [
+                                        App.createDUIInputField({
+                                            id: 'email',
+                                            placeholder: 'Email',
+                                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                            //@ts-ignore also accepts a raw value, not just a DUIBinding
+                                            value: '',
+                                            maskInput: false
+                                        })
+                                    ]
+                                }),
+                                App.createDUISection({
+                                    id: 'passwordSection',
+                                    header: 'Password',
+                                    footer: 'Enter your password',
+                                    isHidden: false,
+                                    rows: async () => [
+                                        App.createDUIInputField({
+                                            id: 'password',
+                                            placeholder: 'Password',
+                                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                                            //@ts-ignore also accepts a raw value, not just a DUIBinding
+                                            value: '',
+                                            maskInput: true
+                                        })
+                                    ]
+                                })
+                            ],
+                            onSubmit: (values) => this.login(values)
+                        })
+                    })
+                ];
+            }
+        });
+    }
+    async login(credentials) {
+        const logPrefix = '[login]';
+        console.log(`${logPrefix} starts`);
+        if (!(0, NettruyenAuth_1.validateCredentials)(credentials)) {
+            console.error(`${logPrefix} login called with invalid credentials: ${JSON.stringify(credentials)}`);
+            throw new Error('Cần bấm vào ô input khác thì mới cập nhật giá trị!!');
+        }
+        try {
+            const request = App.createRequest({
+                method: 'POST',
+                url: `https://hoang3409.link/api/Auth/Login?email=${credentials.email}&password=${credentials.password}`
+            });
+            const result = await this.requestManager.schedule(request, 1);
+            const json = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
+            if (json.error) {
+                throw new Error(json.error.message);
+            }
+            const sessionToken = json.idToken;
+            await Promise.all([
+                (0, NettruyenAuth_1.setUserCredentials)(this.stateManager, credentials),
+                (0, NettruyenAuth_1.setSessionToken)(this.stateManager, sessionToken)
+            ]);
+            console.log(`${logPrefix} complete`);
+        }
+        catch (e) {
+            console.log(`${logPrefix} failed to log in`);
+            console.log(e);
+            throw new Error(e.message);
+        }
+    }
+    async logout() {
+        await Promise.all([(0, NettruyenAuth_1.clearUserCredentials)(this.stateManager), (0, NettruyenAuth_1.clearSessionToken)(this.stateManager)]);
+    }
+    async getMangaProgress(mangaId) {
+        const logPrefix = '[getMangaProgress]';
+        console.log(`${logPrefix} starts`);
+        try {
+            console.log(`${logPrefix} loading id=${mangaId}`);
+            const request = await this.requestManager.schedule(App.createRequest({
+                url: `${Main_1.DOMAIN}Service/GetProcess?idComic=${mangaId}`,
+                method: 'GET'
+            }), 1);
+            const result = typeof request.data === 'string' ? JSON.parse(request.data) : request.data;
+            if (!result)
+                return undefined;
+            const progress = App.createMangaProgress({
+                mangaId: mangaId,
+                lastReadChapterNumber: result.currentChapterNumber ?? 0
+            });
+            console.log(`${logPrefix} complete`);
+            return progress;
+        }
+        catch (ex) {
+            console.log(`${logPrefix} error`);
+            console.log(ex);
+            throw ex;
+        }
+    }
+    async getMangaProgressManagementForm(mangaId) {
+        return App.createDUIForm({
+            sections: async () => {
+                const [credentials] = await Promise.all([
+                    (0, NettruyenAuth_1.getUserCredentials)(this.stateManager)
+                ]);
+                if (credentials == null) {
+                    return [
+                        App.createDUISection({
+                            id: 'notLoggedInSection',
+                            isHidden: false,
+                            rows: async () => [
+                                App.createDUILabel({
+                                    id: 'notLoggedIn',
+                                    label: 'Not Logged In'
+                                })
+                            ]
+                        })
+                    ];
+                }
+                return [
+                    App.createDUISection({
+                        id: 'userInfo',
+                        isHidden: false,
+                        rows: async () => [
+                            App.createDUIHeader({
+                                id: 'header',
+                                imageUrl: '',
+                                title: credentials.email ?? 'NOT LOGGED IN',
+                                subtitle: ''
+                            })
+                        ]
+                    })
+                ];
+            }
+        });
+    }
+    async processChapterReadActionQueue(actionQueue) {
+        // console.log(actionQueue.queuedChapterReadActions())
+        const chapterReadActions = await actionQueue.queuedChapterReadActions();
+        for (const readAction of chapterReadActions) {
+            console.log(readAction.mangaId);
+        }
+        return Promise.resolve(undefined);
     }
 }
 exports.Nettruyen = Nettruyen;
 
-},{"../Main":62,"./tags.json":64,"@paperback/types":61}],64:[function(require,module,exports){
+},{"../Main":62,"./NettruyenAuth":64,"./tags.json":65,"@paperback/types":61}],64:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.clearSessionToken = exports.setSessionToken = exports.getSessionToken = exports.clearUserCredentials = exports.setUserCredentials = exports.getUserCredentials = exports.validateCredentials = exports.STATE_CREDENTIALS = exports.STATE_SESSION = void 0;
+exports.STATE_SESSION = 'token';
+exports.STATE_CREDENTIALS = 'credentials';
+function validateCredentials(credentials) {
+    return (credentials != null &&
+        typeof credentials === 'object' &&
+        credentials.password !== '' &&
+        credentials.email !== '');
+}
+exports.validateCredentials = validateCredentials;
+async function getUserCredentials(stateManager) {
+    const credentialsString = await stateManager.keychain.retrieve(exports.STATE_CREDENTIALS);
+    if (typeof credentialsString !== 'string') {
+        return undefined;
+    }
+    const credentials = JSON.parse(credentialsString);
+    if (!validateCredentials(credentials)) {
+        console.log('store contains invalid credentials!');
+        return undefined;
+    }
+    return credentials;
+}
+exports.getUserCredentials = getUserCredentials;
+async function setUserCredentials(stateManager, credentials) {
+    if (!validateCredentials(credentials)) {
+        console.log(`tried to store invalid mu_credentials: ${JSON.stringify(credentials)}`);
+        throw new Error('tried to store invalid mu_credentials');
+    }
+    await stateManager.keychain.store(exports.STATE_CREDENTIALS, JSON.stringify(credentials));
+}
+exports.setUserCredentials = setUserCredentials;
+async function clearUserCredentials(stateManager) {
+    await stateManager.keychain.store(exports.STATE_CREDENTIALS, undefined);
+}
+exports.clearUserCredentials = clearUserCredentials;
+async function getSessionToken(stateManager) {
+    const sessionToken = await stateManager.keychain.retrieve(exports.STATE_SESSION);
+    return typeof sessionToken === 'string' ? sessionToken : undefined;
+}
+exports.getSessionToken = getSessionToken;
+async function setSessionToken(stateManager, sessionToken) {
+    if (typeof sessionToken !== 'string') {
+        console.log(`tried to store invalid token: ${sessionToken}`);
+        throw new Error('tried to store invalid token');
+    }
+    await stateManager.keychain.store(exports.STATE_SESSION, sessionToken);
+}
+exports.setSessionToken = setSessionToken;
+async function clearSessionToken(stateManager) {
+    await stateManager.keychain.store(exports.STATE_SESSION, undefined);
+}
+exports.clearSessionToken = clearSessionToken;
+
+},{}],65:[function(require,module,exports){
 module.exports=[
     {
         "Id": "1",
@@ -1064,7 +1293,7 @@ module.exports=[
     }
 ]
 
-},{}],65:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertTime = void 0;
