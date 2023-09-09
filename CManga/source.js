@@ -472,11 +472,18 @@ exports.CMangaInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.0.3'),
+    version: (0, Main_1.getExportVersion)('0.0.4'),
     name: 'CManga',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: types_1.ContentRating.ADULT
+    contentRating: types_1.ContentRating.ADULT,
+    sourceTags: [
+        {
+            text: '16+',
+            type: types_1.BadgeColor.GREEN
+        }
+    ],
+    intents: types_1.SourceIntents.HOMEPAGE_SECTIONS | types_1.SourceIntents.MANGA_CHAPTERS
 };
 class CManga extends Main_1.Main {
     constructor() {

@@ -472,7 +472,7 @@ exports.LxMangaInfo = {
     description: '',
     icon: 'icon.ico',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.0.1'),
+    version: (0, Main_1.getExportVersion)('0.0.2'),
     name: ' LxManga',
     language: 'vi',
     author: 'Hoang3409',
@@ -480,9 +480,10 @@ exports.LxMangaInfo = {
     sourceTags: [
         {
             text: '18+',
-            type: types_1.BadgeColor.YELLOW
+            type: types_1.BadgeColor.RED
         }
-    ]
+    ],
+    intents: types_1.SourceIntents.HOMEPAGE_SECTIONS | types_1.SourceIntents.MANGA_CHAPTERS
 };
 class LxManga extends Main_1.Main {
     constructor() {

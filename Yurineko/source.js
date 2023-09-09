@@ -733,11 +733,22 @@ exports.YurinekoInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.0.2'),
+    version: (0, Main_1.getExportVersion)('0.0.3'),
     name: 'Yurineko',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: types_1.ContentRating.ADULT
+    contentRating: types_1.ContentRating.ADULT,
+    sourceTags: [
+        {
+            text: '18+',
+            type: types_1.BadgeColor.RED
+        },
+        {
+            text: '16+',
+            type: types_1.BadgeColor.GREEN
+        }
+    ],
+    intents: types_1.SourceIntents.HOMEPAGE_SECTIONS | types_1.SourceIntents.MANGA_CHAPTERS
 };
 const Domain = 'yurineko.net';
 class Yurineko extends Main_1.Main {

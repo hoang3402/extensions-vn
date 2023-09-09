@@ -728,14 +728,14 @@ exports.Nettruyen = exports.NettruyenInfo = void 0;
 const types_1 = require("@paperback/types");
 const Main_1 = require("../Main");
 const NettruyenAuth_1 = require("./NettruyenAuth");
+const tags_json_1 = __importDefault(require("./tags.json"));
 const HOST = 'NetTruyen';
 const Domain = 'www.nettruyenus.com';
-const tags_json_1 = __importDefault(require("./tags.json"));
 exports.NettruyenInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.2.4'),
+    version: (0, Main_1.getExportVersion)('0.2.8'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -745,7 +745,8 @@ exports.NettruyenInfo = {
             text: '16+',
             type: types_1.BadgeColor.GREEN
         }
-    ]
+    ],
+    intents: types_1.SourceIntents.HOMEPAGE_SECTIONS | types_1.SourceIntents.MANGA_CHAPTERS | types_1.SourceIntents.MANGA_TRACKING | types_1.SourceIntents.SETTINGS_UI
 };
 class Nettruyen extends Main_1.Main {
     constructor() {
@@ -778,6 +779,10 @@ class Nettruyen extends Main_1.Main {
                 }
             }
         });
+    }
+    async getChapterDetails(mangaId, chapterId) {
+        const a = super.getChapterDetails(mangaId, chapterId);
+        return a;
     }
     async getSourceMenu() {
         return App.createDUISection({
@@ -911,6 +916,13 @@ class Nettruyen extends Main_1.Main {
                 const [credentials] = await Promise.all([
                     (0, NettruyenAuth_1.getUserCredentials)(this.stateManager)
                 ]);
+                const [response] = await Promise.all([
+                    this.requestManager.schedule(App.createRequest({
+                        url: `${Main_1.DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+                        method: 'GET'
+                    }), 1)
+                ]);
+                const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
                 if (credentials == null) {
                     return [
                         App.createDUISection({
@@ -937,18 +949,58 @@ class Nettruyen extends Main_1.Main {
                                 subtitle: ''
                             })
                         ]
+                    }),
+                    App.createDUISection({
+                        id: 'information',
+                        header: 'Information',
+                        isHidden: false,
+                        rows: async () => [
+                            App.createDUILabel({
+                                id: 'mediaId',
+                                label: 'Manga ID',
+                                value: data.id?.toString()
+                            }),
+                            App.createDUILabel({
+                                id: 'mangaTitle',
+                                label: 'Title',
+                                value: data.title[0].title ?? 'N/A'
+                            }),
+                            App.createDUILabel({
+                                id: 'mangaStatus',
+                                value: data.status,
+                                label: 'Status'
+                            }),
+                            App.createDUILabel({
+                                id: 'mangaIsAdult',
+                                value: data.nsfw,
+                                label: 'Is Adult'
+                            })
+                        ]
                     })
                 ];
             }
         });
     }
     async processChapterReadActionQueue(actionQueue) {
-        // console.log(actionQueue.queuedChapterReadActions())
         const chapterReadActions = await actionQueue.queuedChapterReadActions();
         for (const readAction of chapterReadActions) {
-            console.log(readAction.mangaId);
+            console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`);
+            try {
+                const _response = await this.requestManager.schedule(App.createRequest({
+                    url: `${Main_1.DOMAIN}Service/SaveProcess?idComic=${readAction.mangaId}&idChapter=${readAction.sourceChapterId}`,
+                    method: 'GET'
+                }), 1);
+                const data = typeof _response.data === 'string' ? JSON.parse(_response.data) : _response.data;
+                if (data.message === 'Success') {
+                    console.log(`Save success ${readAction.mangaId}`);
+                }
+            }
+            catch (error) {
+                console.log(error);
+                console.log(`Save failed ${readAction.mangaId}`);
+                await actionQueue.retryChapterReadAction(readAction);
+            }
         }
-        return Promise.resolve(undefined);
     }
 }
 exports.Nettruyen = Nettruyen;

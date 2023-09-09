@@ -472,11 +472,18 @@ exports.HentaiVNInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.0.3'),
+    version: (0, Main_1.getExportVersion)('0.0.4'),
     name: 'HentaiVN',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: types_1.ContentRating.ADULT
+    contentRating: types_1.ContentRating.ADULT,
+    sourceTags: [
+        {
+            text: '18+',
+            type: types_1.BadgeColor.RED
+        }
+    ],
+    intents: types_1.SourceIntents.HOMEPAGE_SECTIONS | types_1.SourceIntents.MANGA_CHAPTERS
 };
 const Domain = 'hentaivn.tv';
 class HentaiVN extends Main_1.Main {
