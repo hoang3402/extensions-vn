@@ -9,7 +9,7 @@
     "test": "npx paperback test",
     "nodemon": "nodemon",
     "log": "paperback logcat --ip=192.168.1.2"
-  }, 
+  },
   "author": "Hoang3402",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
@@ -27,7 +27,7 @@
     "@paperback/types": "^0.8.0-alpha.47",
     "cheerio": "^1.0.0-rc.12",
     "entities": "^4.4.0",
-    "nodemon": "^2.0.22",
+    "nodemon": "^3.0.1",
     "ts-node": "^10.2.1"
   }
 }
