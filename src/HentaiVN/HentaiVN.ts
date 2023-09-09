@@ -1,7 +1,9 @@
 import {
+    BadgeColor,
     ChapterDetails,
     ContentRating,
-    SourceInfo
+    SourceInfo,
+    SourceIntents
 } from '@paperback/types'
 import {
     getExportVersion,
@@ -15,11 +17,18 @@ export const HentaiVNInfo: SourceInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: getExportVersion('0.0.3'),
+    version: getExportVersion('0.0.4'),
     name: 'HentaiVN',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: ContentRating.ADULT
+    contentRating: ContentRating.ADULT,
+    sourceTags: [
+        {
+            text: '18+',
+            type: BadgeColor.RED
+        }
+    ],
+    intents: SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.MANGA_CHAPTERS
 }
 
 const Domain = 'hentaivn.tv'

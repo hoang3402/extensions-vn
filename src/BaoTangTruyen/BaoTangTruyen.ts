@@ -1,6 +1,8 @@
 import {
+    BadgeColor,
     ContentRating,
-    SourceInfo
+    SourceInfo,
+    SourceIntents
 } from '@paperback/types'
 import {
     getExportVersion,
@@ -14,11 +16,18 @@ export const BaoTangTruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: getExportVersion('0.0.3'),
+    version: getExportVersion('0.0.4'),
     name: 'BaoTangTruyen',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: ContentRating.EVERYONE
+    contentRating: ContentRating.EVERYONE,
+    sourceTags: [
+        {
+            text: '16+',
+            type: BadgeColor.GREEN
+        }
+    ],
+    intents: SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.MANGA_CHAPTERS
 }
 
 export class BaoTangTruyen extends Main {

@@ -1,7 +1,8 @@
 import {
     BadgeColor,
     ContentRating,
-    SourceInfo
+    SourceInfo,
+    SourceIntents
 } from '@paperback/types'
 import {
     getExportVersion,
@@ -15,7 +16,7 @@ export const LxMangaInfo: SourceInfo = {
     description: '',
     icon: 'icon.ico',
     websiteBaseURL: '',
-    version: getExportVersion('0.0.1'),
+    version: getExportVersion('0.0.2'),
     name: ' LxManga',
     language: 'vi',
     author: 'Hoang3409',
@@ -23,9 +24,10 @@ export const LxMangaInfo: SourceInfo = {
     sourceTags: [
         {
             text: '18+',
-            type: BadgeColor.YELLOW
+            type: BadgeColor.RED
         }
-    ]
+    ],
+    intents: SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.MANGA_CHAPTERS
 }
 
 export class LxManga extends Main {

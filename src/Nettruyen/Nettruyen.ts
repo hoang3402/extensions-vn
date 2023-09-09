@@ -1,14 +1,16 @@
 import {
-    ContentRating,
-    SourceInfo,
     BadgeColor,
-    RequestManager, 
-    Request, 
-    Response,
+    ChapterDetails,
+    ContentRating,
     DUIForm,
     DUISection,
     MangaProgress,
     MangaProgressProviding,
+    Request,
+    RequestManager,
+    Response,
+    SourceInfo,
+    SourceIntents,
     TrackerActionQueue
 } from '@paperback/types'
 import {
@@ -17,25 +19,25 @@ import {
     Main
 } from '../Main'
 import {
-    Credentials,
     clearSessionToken,
     clearUserCredentials,
+    Credentials,
     getSessionToken,
     getUserCredentials,
     setSessionToken,
     setUserCredentials,
     validateCredentials
 } from './NettruyenAuth'
+import tags from './tags.json'
 
 const HOST = 'NetTruyen'
 const Domain = 'www.nettruyenus.com'
-import tags from './tags.json'
 
 export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.2.4'),
+    version: getExportVersion('0.2.8'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -45,7 +47,8 @@ export const NettruyenInfo: SourceInfo = {
             text: '16+',
             type: BadgeColor.GREEN
         }
-    ]
+    ],
+    intents: SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.MANGA_CHAPTERS | SourceIntents.MANGA_TRACKING | SourceIntents.SETTINGS_UI
 }
 
 export class Nettruyen extends Main implements MangaProgressProviding{
@@ -58,6 +61,11 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     SearchWithGenres = true
     SearchWithNotGenres = true
     SearchWithTitleAndGenre = true
+
+    override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
+        const a = super.getChapterDetails(mangaId, chapterId)
+        return a
+    }
 
     override requestManager: RequestManager = App.createRequestManager({
         requestsPerSecond: this.requestsPerSecond,
@@ -225,6 +233,13 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                 const [credentials] = await Promise.all([
                     getUserCredentials(this.stateManager)
                 ])
+                const [response] = await Promise.all([
+                    this.requestManager.schedule(App.createRequest({
+                        url: `${DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+                        method: 'GET'
+                    }), 1)
+                ])
+                const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
                 
                 if (credentials == null) {
                     return [
@@ -253,6 +268,33 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                                 subtitle: ''
                             })
                         ]
+                    }),
+                    App.createDUISection({
+                        id: 'information',
+                        header: 'Information',
+                        isHidden: false,
+                        rows: async () => [
+                            App.createDUILabel({
+                                id: 'mediaId',
+                                label: 'Manga ID',
+                                value: data.id?.toString()
+                            }),
+                            App.createDUILabel({
+                                id: 'mangaTitle',
+                                label: 'Title',
+                                value: data.title[0].title ?? 'N/A'
+                            }),
+                            App.createDUILabel({
+                                id: 'mangaStatus',
+                                value: data.status,
+                                label: 'Status'
+                            }),
+                            App.createDUILabel({
+                                id: 'mangaIsAdult',
+                                value: data.nsfw,
+                                label: 'Is Adult'
+                            })
+                        ]
                     })
                 ]
             }
@@ -260,11 +302,25 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     }
 
     async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void> {
-        // console.log(actionQueue.queuedChapterReadActions())
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
         for (const readAction of chapterReadActions) {
-            console.log(readAction.mangaId)
+            console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`)
+            try 
+            {
+                const _response = await this.requestManager.schedule(App.createRequest({
+                    url: `${DOMAIN}Service/SaveProcess?idComic=${readAction.mangaId}&idChapter=${readAction.sourceChapterId}`,
+                    method: 'GET'
+                }), 1)
+                const data = typeof _response.data === 'string' ? JSON.parse(_response.data) : _response.data
+                if (data.message === 'Success') {
+                    console.log(`Save success ${readAction.mangaId}`)
+                } 
+            }
+            catch (error) {
+                console.log(error)
+                console.log(`Save failed ${readAction.mangaId}`)
+                await actionQueue.retryChapterReadAction(readAction)
+            }
         }
-        return Promise.resolve(undefined)
     }
 }

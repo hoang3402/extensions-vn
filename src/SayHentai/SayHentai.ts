@@ -1,6 +1,8 @@
 import {
+    BadgeColor,
     ContentRating,
-    SourceInfo
+    SourceInfo,
+    SourceIntents
 } from '@paperback/types'
 import {
     getExportVersion,
@@ -15,11 +17,18 @@ export const SayHentaiInfo: SourceInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: getExportVersion('0.2.0'),
+    version: getExportVersion('0.2.1'),
     name: 'SayHentai',
     language: 'vi',
     author: 'Hoang3409',
-    contentRating: ContentRating.ADULT
+    contentRating: ContentRating.ADULT,
+    sourceTags: [
+        {
+            text: '18+',
+            type: BadgeColor.RED
+        }
+    ],
+    intents: SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.MANGA_CHAPTERS 
 }
 
 export class SayHentai extends Main {
