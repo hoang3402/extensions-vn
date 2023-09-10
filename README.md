@@ -19,10 +19,10 @@ https://hoang3409.is-a.dev/extensions-vn/
 
 | Name          | Link                          |
 |---------------|-------------------------------|
-| BaoTangTruyen | https://baotangtruyen3.com/   |
+| BaoTangTruyen | https://baotangtruyen4.com/   |
 | CManga        | https://cmangaah.com/         |
 | NetTruyen     | https://www.nettruyenus.com/  |
-| SayHentai     | https://sayhentai.me/         |
+| SayHentai     | https://sayhentai.fun/        |
 | HentaiVN      | https://hentaivn.tv/          |
 | LxManga       | https://lxmanga.net/          |
 | Yurineko      | https://yurineko.net/         |
