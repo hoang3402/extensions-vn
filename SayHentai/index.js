@@ -728,13 +728,13 @@ exports.SayHentai = exports.SayHentaiInfo = void 0;
 const types_1 = require("@paperback/types");
 const Main_1 = require("../Main");
 const HOST = 'SayHentai';
-const Domain = 'sayhentai.me';
+const Domain = 'sayhentai.fun';
 const tags_json_1 = __importDefault(require("./tags.json"));
 exports.SayHentaiInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.2.1'),
+    version: (0, Main_1.getExportVersion)('0.2.2'),
     name: 'SayHentai',
     language: 'vi',
     author: 'Hoang3409',
