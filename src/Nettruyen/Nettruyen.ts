@@ -22,8 +22,11 @@ import {
     clearSessionToken,
     clearUserCredentials,
     Credentials,
+    getLoginTime,
+    getSessionRefreshToken,
     getSessionToken,
-    getUserCredentials,
+    getUserCredentials, 
+    setLoginTime,
     setSessionToken,
     setUserCredentials,
     validateCredentials
@@ -37,7 +40,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.2.8'),
+    version: getExportVersion('0.3.0'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -106,6 +109,16 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                             id: 'userInfo',
                             label: 'Logged as',
                             value: credentials.email
+                        }),
+                        App.createDUILabel({
+                            id: 'loginTime',
+                            label: 'Session started at',
+                            value: await getLoginTime(this.stateManager)
+                        }),
+                        App.createDUIButton({
+                            id: 'refresh',
+                            label: 'Refresh session',
+                            onTap: async () => this.refreshSession()
                         }),
                         App.createDUIButton({
                             id: 'logout',
@@ -180,11 +193,12 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             if (json.error) {
                 throw new Error(json.error.message)
             }
-            const sessionToken = json.idToken
+            const sessionToken = json
 
             await Promise.all([
                 setUserCredentials(this.stateManager, credentials),
-                setSessionToken(this.stateManager, sessionToken)
+                setSessionToken(this.stateManager, sessionToken),
+                setLoginTime(this.stateManager)
             ])
             
             console.log(`${logPrefix} complete`)
@@ -199,6 +213,36 @@ export class Nettruyen extends Main implements MangaProgressProviding{
         await Promise.all([clearUserCredentials(this.stateManager), clearSessionToken(this.stateManager)])
     }
 
+    private async refreshSession(): Promise<void> {
+        const logPrefix = '[refreshSession]'
+        console.log(`${logPrefix} starts`)
+
+        const credentials = await getUserCredentials(this.stateManager)
+        if (!credentials) {
+            console.log(`${logPrefix} no credentials available, unable to refresh`)
+            throw new Error('Could not find login credentials!')
+        }
+        
+        const refreshToken = await getSessionRefreshToken(this.stateManager)
+        if (!refreshToken) {
+            console.log(`${logPrefix} no refresh token available, unable to refresh`)
+            throw new Error('Could not find refresh token!')
+        }
+
+        const response = await this.requestManager.schedule(App.createRequest({
+            url: `${DOMAIN}Auth/RefreshToken?token=${refreshToken}`,
+            method: 'POST'
+        }), 0)
+        const json = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
+        if (json.error) {
+            throw new Error(json.error.message)
+        }
+        await setSessionToken(this.stateManager, json)
+        await setLoginTime(this.stateManager)
+
+        console.log(`${logPrefix} complete`)
+    }
+    
     async getMangaProgress(mangaId: string): Promise<MangaProgress | undefined> {
         const logPrefix = '[getMangaProgress]'
         console.log(`${logPrefix} starts`)
