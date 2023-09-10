@@ -10,14 +10,14 @@ import {
 } from '../Main'
 
 const HOST = 'SayHentai'
-const Domain = 'sayhentai.me'
+const Domain = 'sayhentai.fun'
 import tags from './tags.json'
 
 export const SayHentaiInfo: SourceInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: getExportVersion('0.2.1'),
+    version: getExportVersion('0.2.2'),
     name: 'SayHentai',
     language: 'vi',
     author: 'Hoang3409',
