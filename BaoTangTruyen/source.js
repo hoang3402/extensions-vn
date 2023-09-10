@@ -494,7 +494,7 @@ class BaoTangTruyen extends Main_1.Main {
         this.SearchWithGenres = false;
         this.SearchWithNotGenres = false;
         this.SearchWithTitleAndGenre = false;
-        this.HostDomain = 'https://baotangtruyen3.com/';
+        this.HostDomain = 'https://baotangtruyen4.com/';
     }
 }
 exports.BaoTangTruyen = BaoTangTruyen;
