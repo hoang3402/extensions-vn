@@ -39,5 +39,5 @@ export class BaoTangTruyen extends Main {
     SearchWithGenres = false
     SearchWithNotGenres = false
     SearchWithTitleAndGenre = false
-    HostDomain = 'https://baotangtruyen3.com/'
+    HostDomain = 'https://baotangtruyen4.com/'
 }
