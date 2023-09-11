@@ -1,6 +1,5 @@
 import {
     BadgeColor,
-    ChapterDetails,
     ContentRating,
     DUIForm,
     DUISection,
@@ -64,11 +63,6 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     SearchWithGenres = true
     SearchWithNotGenres = true
     SearchWithTitleAndGenre = true
-
-    override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
-        const a = super.getChapterDetails(mangaId, chapterId)
-        return a
-    }
 
     override requestManager: RequestManager = App.createRequestManager({
         requestsPerSecond: this.requestsPerSecond,
