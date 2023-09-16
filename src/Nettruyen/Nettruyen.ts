@@ -39,7 +39,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.3.3'),
+    version: getExportVersion('0.3.4'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -249,7 +249,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             }), 1)
             const result = typeof request.data === 'string' ? JSON.parse(request.data) : request.data
 
-            if (!result) return undefined 
+            if (!result || result.length < 1) return undefined 
             
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
