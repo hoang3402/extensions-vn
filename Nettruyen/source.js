@@ -737,7 +737,7 @@ exports.NettruyenInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.3.3'),
+    version: (0, Main_1.getExportVersion)('0.3.4'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -929,7 +929,7 @@ class Nettruyen extends Main_1.Main {
                 method: 'GET'
             }), 1);
             const result = typeof request.data === 'string' ? JSON.parse(request.data) : request.data;
-            if (!result)
+            if (!result || result.length < 1)
                 return undefined;
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
