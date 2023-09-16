@@ -16,7 +16,7 @@ export const CMangaInfo: SourceInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: getExportVersion('0.0.4'),
+    version: getExportVersion('0.0.5'),
     name: 'CManga',
     language: 'vi',
     author: 'Hoang3409',
@@ -39,5 +39,5 @@ export class CManga extends Main {
     SearchWithGenres = true
     SearchWithNotGenres = false
     SearchWithTitleAndGenre = true
-    HostDomain = 'https://cmangaah.com/'
+    HostDomain = 'https://cmangaaz.com/'
 }
