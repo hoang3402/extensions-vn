@@ -1,7 +1,9 @@
 import {SourceStateManager} from '@paperback/types'
 
 export const STATE_SESSION = 'token'
+export const STATE_REFRESH_SESSION = 'refresh token'
 export const STATE_CREDENTIALS = 'credentials'
+export const STATE_TIME_LOGIN = 'time'
 
 export interface Credentials {
     email: string;
@@ -50,15 +52,32 @@ export async function getSessionToken(stateManager: SourceStateManager): Promise
     return typeof sessionToken === 'string' ? sessionToken : undefined
 }
 
-export async function setSessionToken(stateManager: SourceStateManager, sessionToken: string): Promise<void> {
-    if (typeof sessionToken !== 'string') {
+export async function getSessionRefreshToken(stateManager: SourceStateManager): Promise<string | undefined> {
+    const sessionToken = await stateManager.keychain.retrieve(STATE_REFRESH_SESSION)
+    return typeof sessionToken === 'string' ? sessionToken : undefined
+}
+
+export async function setSessionToken(stateManager: SourceStateManager, sessionToken: any): Promise<void> {
+    if (!sessionToken.idToken || !sessionToken.refreshToken) {
         console.log(`tried to store invalid token: ${sessionToken}`)
         throw new Error('tried to store invalid token')
     }
-
-    await stateManager.keychain.store(STATE_SESSION, sessionToken)
+    
+    await stateManager.keychain.store(STATE_SESSION, sessionToken.idToken)
+    await stateManager.keychain.store(STATE_REFRESH_SESSION, sessionToken.refreshToken)
 }
 
 export async function clearSessionToken(stateManager: SourceStateManager): Promise<void> {
     await stateManager.keychain.store(STATE_SESSION, undefined)
+    await stateManager.keychain.store(STATE_REFRESH_SESSION, undefined)
+}
+
+export async function getLoginTime(stateManager: SourceStateManager) {
+    const sessionToken = await stateManager.keychain.retrieve(STATE_TIME_LOGIN)
+    return typeof sessionToken === 'string' ? sessionToken : undefined
+}
+
+export async function setLoginTime(stateManager: SourceStateManager) {
+    const currentTime = new Date()
+    await stateManager.keychain.store(STATE_TIME_LOGIN, currentTime.toTimeString())
 }

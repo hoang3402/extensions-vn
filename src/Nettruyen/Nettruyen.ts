@@ -1,6 +1,5 @@
 import {
     BadgeColor,
-    ChapterDetails,
     ContentRating,
     DUIForm,
     DUISection,
@@ -22,8 +21,11 @@ import {
     clearSessionToken,
     clearUserCredentials,
     Credentials,
+    getLoginTime,
+    getSessionRefreshToken,
     getSessionToken,
-    getUserCredentials,
+    getUserCredentials, 
+    setLoginTime,
     setSessionToken,
     setUserCredentials,
     validateCredentials
@@ -37,7 +39,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.2.8'),
+    version: getExportVersion('0.3.3'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -61,11 +63,6 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     SearchWithGenres = true
     SearchWithNotGenres = true
     SearchWithTitleAndGenre = true
-
-    override async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
-        const a = super.getChapterDetails(mangaId, chapterId)
-        return a
-    }
 
     override requestManager: RequestManager = App.createRequestManager({
         requestsPerSecond: this.requestsPerSecond,
@@ -106,6 +103,16 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                             id: 'userInfo',
                             label: 'Logged as',
                             value: credentials.email
+                        }),
+                        App.createDUILabel({
+                            id: 'loginTime',
+                            label: 'Session started: ',
+                            value: await getLoginTime(this.stateManager)
+                        }),
+                        App.createDUIButton({
+                            id: 'refresh',
+                            label: 'Refresh session',
+                            onTap: async () => this.refreshSession()
                         }),
                         App.createDUIButton({
                             id: 'logout',
@@ -180,11 +187,12 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             if (json.error) {
                 throw new Error(json.error.message)
             }
-            const sessionToken = json.idToken
+            const sessionToken = json
 
             await Promise.all([
                 setUserCredentials(this.stateManager, credentials),
-                setSessionToken(this.stateManager, sessionToken)
+                setSessionToken(this.stateManager, sessionToken),
+                setLoginTime(this.stateManager)
             ])
             
             console.log(`${logPrefix} complete`)
@@ -199,6 +207,36 @@ export class Nettruyen extends Main implements MangaProgressProviding{
         await Promise.all([clearUserCredentials(this.stateManager), clearSessionToken(this.stateManager)])
     }
 
+    private async refreshSession(): Promise<void> {
+        const logPrefix = '[refreshSession]'
+        console.log(`${logPrefix} starts`)
+
+        const credentials = await getUserCredentials(this.stateManager)
+        if (!credentials) {
+            console.log(`${logPrefix} no credentials available, unable to refresh`)
+            throw new Error('Could not find login credentials!')
+        }
+        
+        const refreshToken = await getSessionRefreshToken(this.stateManager)
+        if (!refreshToken) {
+            console.log(`${logPrefix} no refresh token available, unable to refresh`)
+            throw new Error('Could not find refresh token!')
+        }
+
+        const response = await this.requestManager.schedule(App.createRequest({
+            url: `${DOMAIN}Auth/RefreshToken?token=${refreshToken}`,
+            method: 'POST'
+        }), 0)
+        const json = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
+        if (json.error) {
+            throw new Error(json.error.message)
+        }
+        await setSessionToken(this.stateManager, json)
+        await setLoginTime(this.stateManager)
+
+        console.log(`${logPrefix} complete`)
+    }
+    
     async getMangaProgress(mangaId: string): Promise<MangaProgress | undefined> {
         const logPrefix = '[getMangaProgress]'
         console.log(`${logPrefix} starts`)
@@ -215,7 +253,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
-                lastReadChapterNumber: result.currentChapterNumber ?? 0
+                lastReadChapterNumber: result[0].currentChapterNumber ?? 0
             })
 
             console.log(`${logPrefix} complete`)
@@ -230,8 +268,9 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     async getMangaProgressManagementForm(mangaId: string): Promise<DUIForm> {
         return App.createDUIForm({
             sections: async () => {
-                const [credentials] = await Promise.all([
-                    getUserCredentials(this.stateManager)
+                const [credentials, processInfo] = await Promise.all([
+                    getUserCredentials(this.stateManager),
+                    this.getMangaProgress(mangaId)
                 ])
                 const [response] = await Promise.all([
                     this.requestManager.schedule(App.createRequest({
@@ -264,7 +303,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                             App.createDUIHeader({
                                 id: 'header',
                                 imageUrl: '',
-                                title: credentials.email ?? 'NOT LOGGED IN',
+                                title: credentials.email ?? 'Chưa đăng nhập',
                                 subtitle: ''
                             })
                         ]
@@ -276,23 +315,28 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                         rows: async () => [
                             App.createDUILabel({
                                 id: 'mediaId',
-                                label: 'Manga ID',
+                                label: 'Id',
                                 value: data.id?.toString()
                             }),
                             App.createDUILabel({
                                 id: 'mangaTitle',
-                                label: 'Title',
+                                label: 'Tên',
                                 value: data.title[0].title ?? 'N/A'
                             }),
                             App.createDUILabel({
-                                id: 'mangaStatus',
-                                value: data.status,
-                                label: 'Status'
+                                id: 'mangaProcess',
+                                label: 'Đang đọc',
+                                value: processInfo!.lastReadChapterNumber.toString()
                             }),
                             App.createDUILabel({
-                                id: 'mangaIsAdult',
-                                value: data.nsfw,
-                                label: 'Is Adult'
+                                id: 'mangaStatus',
+                                value: data.status == 2 ? 'Đang cập nhật' : 'Xong',
+                                label: 'Trạng thái'
+                            }),
+                            App.createDUILabel({
+                                id: 'lastTimeUpdate',
+                                value: new Date(data.lastTimeUpdate).toTimeString(),
+                                label: 'Cập nhật'
                             })
                         ]
                     })
@@ -302,6 +346,8 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     }
 
     async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void> {
+        await this.refreshSession()
+        
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
         for (const readAction of chapterReadActions) {
             console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`)
