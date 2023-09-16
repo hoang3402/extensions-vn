@@ -472,7 +472,7 @@ exports.CMangaInfo = {
     description: '',
     icon: 'icon.png',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.0.4'),
+    version: (0, Main_1.getExportVersion)('0.0.5'),
     name: 'CManga',
     language: 'vi',
     author: 'Hoang3409',
@@ -494,7 +494,7 @@ class CManga extends Main_1.Main {
         this.SearchWithGenres = true;
         this.SearchWithNotGenres = false;
         this.SearchWithTitleAndGenre = true;
-        this.HostDomain = 'https://cmangaah.com/';
+        this.HostDomain = 'https://cmangaaz.com/';
     }
 }
 exports.CManga = CManga;
