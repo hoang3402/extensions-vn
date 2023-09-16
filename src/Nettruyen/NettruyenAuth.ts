@@ -58,7 +58,7 @@ export async function getSessionRefreshToken(stateManager: SourceStateManager): 
 }
 
 export async function setSessionToken(stateManager: SourceStateManager, sessionToken: any): Promise<void> {
-    if (sessionToken.idToken || sessionToken.refreshToken) {
+    if (!sessionToken.idToken || !sessionToken.refreshToken) {
         console.log(`tried to store invalid token: ${sessionToken}`)
         throw new Error('tried to store invalid token')
     }
@@ -79,6 +79,5 @@ export async function getLoginTime(stateManager: SourceStateManager) {
 
 export async function setLoginTime(stateManager: SourceStateManager) {
     const currentTime = new Date()
-    currentTime.setHours(currentTime.getHours() + 1)
     await stateManager.keychain.store(STATE_TIME_LOGIN, currentTime.toTimeString())
 }

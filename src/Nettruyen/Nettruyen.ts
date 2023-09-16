@@ -39,7 +39,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.3.0'),
+    version: getExportVersion('0.3.3'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -106,7 +106,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                         }),
                         App.createDUILabel({
                             id: 'loginTime',
-                            label: 'Session started at',
+                            label: 'Session started: ',
                             value: await getLoginTime(this.stateManager)
                         }),
                         App.createDUIButton({
@@ -253,7 +253,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
-                lastReadChapterNumber: result.currentChapterNumber ?? 0
+                lastReadChapterNumber: result[0].currentChapterNumber ?? 0
             })
 
             console.log(`${logPrefix} complete`)
@@ -268,8 +268,9 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     async getMangaProgressManagementForm(mangaId: string): Promise<DUIForm> {
         return App.createDUIForm({
             sections: async () => {
-                const [credentials] = await Promise.all([
-                    getUserCredentials(this.stateManager)
+                const [credentials, processInfo] = await Promise.all([
+                    getUserCredentials(this.stateManager),
+                    this.getMangaProgress(mangaId)
                 ])
                 const [response] = await Promise.all([
                     this.requestManager.schedule(App.createRequest({
@@ -302,7 +303,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                             App.createDUIHeader({
                                 id: 'header',
                                 imageUrl: '',
-                                title: credentials.email ?? 'NOT LOGGED IN',
+                                title: credentials.email ?? 'Chưa đăng nhập',
                                 subtitle: ''
                             })
                         ]
@@ -314,23 +315,28 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                         rows: async () => [
                             App.createDUILabel({
                                 id: 'mediaId',
-                                label: 'Manga ID',
+                                label: 'Id',
                                 value: data.id?.toString()
                             }),
                             App.createDUILabel({
                                 id: 'mangaTitle',
-                                label: 'Title',
+                                label: 'Tên',
                                 value: data.title[0].title ?? 'N/A'
                             }),
                             App.createDUILabel({
-                                id: 'mangaStatus',
-                                value: data.status,
-                                label: 'Status'
+                                id: 'mangaProcess',
+                                label: 'Đang đọc',
+                                value: processInfo!.lastReadChapterNumber.toString()
                             }),
                             App.createDUILabel({
-                                id: 'mangaIsAdult',
-                                value: data.nsfw,
-                                label: 'Is Adult'
+                                id: 'mangaStatus',
+                                value: data.status == 2 ? 'Đang cập nhật' : 'Xong',
+                                label: 'Trạng thái'
+                            }),
+                            App.createDUILabel({
+                                id: 'lastTimeUpdate',
+                                value: new Date(data.lastTimeUpdate).toTimeString(),
+                                label: 'Cập nhật'
                             })
                         ]
                     })
@@ -340,6 +346,8 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     }
 
     async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void> {
+        await this.refreshSession()
+        
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
         for (const readAction of chapterReadActions) {
             console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`)
