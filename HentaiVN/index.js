@@ -1490,10 +1490,12 @@ class Main {
         return App.createSourceManga({
             id: mangaId,
             mangaInfo: App.createMangaInfo({
-                desc: data.description || 'no description',
+                desc: data.description || 'Đang cập nhật',
                 image: data.cover,
-                status: '',
+                status: data.status == 2 ? 'Đang cập nhật' : 'Xong',
                 titles: titles,
+                author: data.author ?? 'Đang cập nhật',
+                artist: undefined,
                 tags: [App.createTagSection({ label: 'genres', tags: tags, id: '0' })]
             })
         });

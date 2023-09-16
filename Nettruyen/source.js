@@ -586,10 +586,12 @@ class Main {
         return App.createSourceManga({
             id: mangaId,
             mangaInfo: App.createMangaInfo({
-                desc: data.description || 'no description',
+                desc: data.description || 'Đang cập nhật',
                 image: data.cover,
-                status: '',
+                status: data.status == 2 ? 'Đang cập nhật' : 'Xong',
                 titles: titles,
+                author: data.author ?? 'Đang cập nhật',
+                artist: undefined,
                 tags: [App.createTagSection({ label: 'genres', tags: tags, id: '0' })]
             })
         });
@@ -735,7 +737,7 @@ exports.NettruyenInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.2.8'),
+    version: (0, Main_1.getExportVersion)('0.3.3'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -780,10 +782,6 @@ class Nettruyen extends Main_1.Main {
             }
         });
     }
-    async getChapterDetails(mangaId, chapterId) {
-        const a = super.getChapterDetails(mangaId, chapterId);
-        return a;
-    }
     async getSourceMenu() {
         return App.createDUISection({
             id: 'sourceMenu',
@@ -798,6 +796,16 @@ class Nettruyen extends Main_1.Main {
                             id: 'userInfo',
                             label: 'Logged as',
                             value: credentials.email
+                        }),
+                        App.createDUILabel({
+                            id: 'loginTime',
+                            label: 'Session started: ',
+                            value: await (0, NettruyenAuth_1.getLoginTime)(this.stateManager)
+                        }),
+                        App.createDUIButton({
+                            id: 'refresh',
+                            label: 'Refresh session',
+                            onTap: async () => this.refreshSession()
                         }),
                         App.createDUIButton({
                             id: 'logout',
@@ -869,10 +877,11 @@ class Nettruyen extends Main_1.Main {
             if (json.error) {
                 throw new Error(json.error.message);
             }
-            const sessionToken = json.idToken;
+            const sessionToken = json;
             await Promise.all([
                 (0, NettruyenAuth_1.setUserCredentials)(this.stateManager, credentials),
-                (0, NettruyenAuth_1.setSessionToken)(this.stateManager, sessionToken)
+                (0, NettruyenAuth_1.setSessionToken)(this.stateManager, sessionToken),
+                (0, NettruyenAuth_1.setLoginTime)(this.stateManager)
             ]);
             console.log(`${logPrefix} complete`);
         }
@@ -884,6 +893,31 @@ class Nettruyen extends Main_1.Main {
     }
     async logout() {
         await Promise.all([(0, NettruyenAuth_1.clearUserCredentials)(this.stateManager), (0, NettruyenAuth_1.clearSessionToken)(this.stateManager)]);
+    }
+    async refreshSession() {
+        const logPrefix = '[refreshSession]';
+        console.log(`${logPrefix} starts`);
+        const credentials = await (0, NettruyenAuth_1.getUserCredentials)(this.stateManager);
+        if (!credentials) {
+            console.log(`${logPrefix} no credentials available, unable to refresh`);
+            throw new Error('Could not find login credentials!');
+        }
+        const refreshToken = await (0, NettruyenAuth_1.getSessionRefreshToken)(this.stateManager);
+        if (!refreshToken) {
+            console.log(`${logPrefix} no refresh token available, unable to refresh`);
+            throw new Error('Could not find refresh token!');
+        }
+        const response = await this.requestManager.schedule(App.createRequest({
+            url: `${Main_1.DOMAIN}Auth/RefreshToken?token=${refreshToken}`,
+            method: 'POST'
+        }), 0);
+        const json = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+        if (json.error) {
+            throw new Error(json.error.message);
+        }
+        await (0, NettruyenAuth_1.setSessionToken)(this.stateManager, json);
+        await (0, NettruyenAuth_1.setLoginTime)(this.stateManager);
+        console.log(`${logPrefix} complete`);
     }
     async getMangaProgress(mangaId) {
         const logPrefix = '[getMangaProgress]';
@@ -899,7 +933,7 @@ class Nettruyen extends Main_1.Main {
                 return undefined;
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
-                lastReadChapterNumber: result.currentChapterNumber ?? 0
+                lastReadChapterNumber: result[0].currentChapterNumber ?? 0
             });
             console.log(`${logPrefix} complete`);
             return progress;
@@ -913,8 +947,9 @@ class Nettruyen extends Main_1.Main {
     async getMangaProgressManagementForm(mangaId) {
         return App.createDUIForm({
             sections: async () => {
-                const [credentials] = await Promise.all([
-                    (0, NettruyenAuth_1.getUserCredentials)(this.stateManager)
+                const [credentials, processInfo] = await Promise.all([
+                    (0, NettruyenAuth_1.getUserCredentials)(this.stateManager),
+                    this.getMangaProgress(mangaId)
                 ]);
                 const [response] = await Promise.all([
                     this.requestManager.schedule(App.createRequest({
@@ -945,7 +980,7 @@ class Nettruyen extends Main_1.Main {
                             App.createDUIHeader({
                                 id: 'header',
                                 imageUrl: '',
-                                title: credentials.email ?? 'NOT LOGGED IN',
+                                title: credentials.email ?? 'Chưa đăng nhập',
                                 subtitle: ''
                             })
                         ]
@@ -957,23 +992,28 @@ class Nettruyen extends Main_1.Main {
                         rows: async () => [
                             App.createDUILabel({
                                 id: 'mediaId',
-                                label: 'Manga ID',
+                                label: 'Id',
                                 value: data.id?.toString()
                             }),
                             App.createDUILabel({
                                 id: 'mangaTitle',
-                                label: 'Title',
+                                label: 'Tên',
                                 value: data.title[0].title ?? 'N/A'
                             }),
                             App.createDUILabel({
-                                id: 'mangaStatus',
-                                value: data.status,
-                                label: 'Status'
+                                id: 'mangaProcess',
+                                label: 'Đang đọc',
+                                value: processInfo.lastReadChapterNumber.toString()
                             }),
                             App.createDUILabel({
-                                id: 'mangaIsAdult',
-                                value: data.nsfw,
-                                label: 'Is Adult'
+                                id: 'mangaStatus',
+                                value: data.status == 2 ? 'Đang cập nhật' : 'Xong',
+                                label: 'Trạng thái'
+                            }),
+                            App.createDUILabel({
+                                id: 'lastTimeUpdate',
+                                value: new Date(data.lastTimeUpdate).toTimeString(),
+                                label: 'Cập nhật'
                             })
                         ]
                     })
@@ -982,6 +1022,7 @@ class Nettruyen extends Main_1.Main {
         });
     }
     async processChapterReadActionQueue(actionQueue) {
+        await this.refreshSession();
         const chapterReadActions = await actionQueue.queuedChapterReadActions();
         for (const readAction of chapterReadActions) {
             console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`);
@@ -1008,9 +1049,11 @@ exports.Nettruyen = Nettruyen;
 },{"../Main":62,"./NettruyenAuth":64,"./tags.json":65,"@paperback/types":61}],64:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearSessionToken = exports.setSessionToken = exports.getSessionToken = exports.clearUserCredentials = exports.setUserCredentials = exports.getUserCredentials = exports.validateCredentials = exports.STATE_CREDENTIALS = exports.STATE_SESSION = void 0;
+exports.setLoginTime = exports.getLoginTime = exports.clearSessionToken = exports.setSessionToken = exports.getSessionRefreshToken = exports.getSessionToken = exports.clearUserCredentials = exports.setUserCredentials = exports.getUserCredentials = exports.validateCredentials = exports.STATE_TIME_LOGIN = exports.STATE_CREDENTIALS = exports.STATE_REFRESH_SESSION = exports.STATE_SESSION = void 0;
 exports.STATE_SESSION = 'token';
+exports.STATE_REFRESH_SESSION = 'refresh token';
 exports.STATE_CREDENTIALS = 'credentials';
+exports.STATE_TIME_LOGIN = 'time';
 function validateCredentials(credentials) {
     return (credentials != null &&
         typeof credentials === 'object' &&
@@ -1048,18 +1091,35 @@ async function getSessionToken(stateManager) {
     return typeof sessionToken === 'string' ? sessionToken : undefined;
 }
 exports.getSessionToken = getSessionToken;
+async function getSessionRefreshToken(stateManager) {
+    const sessionToken = await stateManager.keychain.retrieve(exports.STATE_REFRESH_SESSION);
+    return typeof sessionToken === 'string' ? sessionToken : undefined;
+}
+exports.getSessionRefreshToken = getSessionRefreshToken;
 async function setSessionToken(stateManager, sessionToken) {
-    if (typeof sessionToken !== 'string') {
+    if (!sessionToken.idToken || !sessionToken.refreshToken) {
         console.log(`tried to store invalid token: ${sessionToken}`);
         throw new Error('tried to store invalid token');
     }
-    await stateManager.keychain.store(exports.STATE_SESSION, sessionToken);
+    await stateManager.keychain.store(exports.STATE_SESSION, sessionToken.idToken);
+    await stateManager.keychain.store(exports.STATE_REFRESH_SESSION, sessionToken.refreshToken);
 }
 exports.setSessionToken = setSessionToken;
 async function clearSessionToken(stateManager) {
     await stateManager.keychain.store(exports.STATE_SESSION, undefined);
+    await stateManager.keychain.store(exports.STATE_REFRESH_SESSION, undefined);
 }
 exports.clearSessionToken = clearSessionToken;
+async function getLoginTime(stateManager) {
+    const sessionToken = await stateManager.keychain.retrieve(exports.STATE_TIME_LOGIN);
+    return typeof sessionToken === 'string' ? sessionToken : undefined;
+}
+exports.getLoginTime = getLoginTime;
+async function setLoginTime(stateManager) {
+    const currentTime = new Date();
+    await stateManager.keychain.store(exports.STATE_TIME_LOGIN, currentTime.toTimeString());
+}
+exports.setLoginTime = setLoginTime;
 
 },{}],65:[function(require,module,exports){
 module.exports=[
