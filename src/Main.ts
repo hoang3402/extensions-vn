@@ -20,7 +20,7 @@ import {convertTime} from './utils/time'
 
 export const DOMAIN = 'https://hoang3409.link/api/'
 
-const BASE_VERSION = '1.3.3'
+const BASE_VERSION = '1.3.4'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -97,7 +97,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             const items = []
             for (const item of result.mangas) {
                 items.push(App.createPartialSourceManga({
-                    title: item.title[0],
+                    title: item.titles[0],
                     image: item.cover,
                     mangaId: this.UseId ? item.id.toString() : item.url,
                     subtitle: undefined
@@ -122,7 +122,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const items: PartialSourceManga[] = []
         for (const item of result.mangas) {
             items.push(App.createPartialSourceManga({
-                title: item.title[0],
+                title: item.titles[0],
                 image: item.cover,
                 mangaId: this.UseId ? item.id.toString() : item.url,
                 subtitle: undefined
@@ -147,8 +147,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
         const titles: string[] = []
         const tags: Tag[] = []
-        for (const item of data.title) {
-            titles.push(item.title)
+        for (const item of data.titles) {
+            titles.push(item)
         }
         if (data.genres) {
             for (const item of data.genres) {
@@ -256,7 +256,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const tiles: PartialSourceManga[] = []
         result.forEach((item: any) => {
             tiles.push(App.createPartialSourceManga({
-                title: item.title[0],
+                title: item.titles[0],
                 image: item.cover,
                 mangaId: this.UseId ? item.id.toString() : item.url,
                 subtitle: undefined
