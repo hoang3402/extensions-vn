@@ -39,7 +39,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.3.4'),
+    version: getExportVersion('0.3.5'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -321,7 +321,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                             App.createDUILabel({
                                 id: 'mangaTitle',
                                 label: 'Tên',
-                                value: data.title[0].title ?? 'N/A'
+                                value: data.titles[0] ?? 'N/A'
                             }),
                             App.createDUILabel({
                                 id: 'mangaProcess',
