@@ -839,7 +839,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Main = exports.getExportVersion = exports.DOMAIN = void 0;
 const time_1 = require("./utils/time");
 exports.DOMAIN = 'https://hoang3409.link/api/';
-const BASE_VERSION = '1.3.3';
+const BASE_VERSION = '1.3.4';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
 };
@@ -899,7 +899,7 @@ class Main {
             const items = [];
             for (const item of result.mangas) {
                 items.push(App.createPartialSourceManga({
-                    title: item.title[0],
+                    title: item.titles[0],
                     image: item.cover,
                     mangaId: this.UseId ? item.id.toString() : item.url,
                     subtitle: undefined
@@ -922,7 +922,7 @@ class Main {
         const items = [];
         for (const item of result.mangas) {
             items.push(App.createPartialSourceManga({
-                title: item.title[0],
+                title: item.titles[0],
                 image: item.cover,
                 mangaId: this.UseId ? item.id.toString() : item.url,
                 subtitle: undefined
@@ -945,8 +945,8 @@ class Main {
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
         const titles = [];
         const tags = [];
-        for (const item of data.title) {
-            titles.push(item.title);
+        for (const item of data.titles) {
+            titles.push(item);
         }
         if (data.genres) {
             for (const item of data.genres) {
@@ -1047,7 +1047,7 @@ class Main {
         const tiles = [];
         result.forEach((item) => {
             tiles.push(App.createPartialSourceManga({
-                title: item.title[0],
+                title: item.titles[0],
                 image: item.cover,
                 mangaId: this.UseId ? item.id.toString() : item.url,
                 subtitle: undefined
