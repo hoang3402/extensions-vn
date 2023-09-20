@@ -180,7 +180,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
         try {
             const request = App.createRequest({
                 method: 'POST', 
-                url: `https://hoang3409.link/api/Auth/Login?email=${credentials.email}&password=${credentials.password}`
+                url: `${DOMAIN}Auth/Login?email=${credentials.email}&password=${credentials.password}`
             })
             const result = await this.requestManager.schedule(request, 1)
             const json = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
