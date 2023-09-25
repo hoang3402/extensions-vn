@@ -628,14 +628,14 @@ class Main {
         const images = [];
         for (const image of data) {
             let img = image.toString();
-            if (img.includes('https://telegra.ph/')) {
-                img = 'https://wsrv.nl/?url=' + img;
-            }
+            // if (img.includes('https://telegra.ph/')) {
+            // }
             if (img.startsWith('//')) {
                 img = 'https:' + img;
             }
             img = img.replace('http:', 'https:');
             images.push(img);
+            console.log(img);
         }
         return App.createChapterDetails({
             id: chapterId,
