@@ -20,7 +20,7 @@ import {convertTime} from './utils/time'
 
 export const DOMAIN = 'https://hoang3409.link/api/'
 
-const BASE_VERSION = '1.3.4'
+const BASE_VERSION = '1.3.6'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -186,11 +186,13 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
         const chapters: Chapter[] = []
         for (const item of data) {
+            const time = convertTime(item.timeUpdate)
+            time.setHours(time.getHours() + 7)
             chapters.push(App.createChapter({
                 id: this.UseId ? item.id.toString() : item.url,
                 chapNum: item.numChap ?? item.chapNumber,
                 name: item.title,
-                time: convertTime(item.timeUpdate)
+                time: time
             }))
         }
         return chapters
@@ -206,8 +208,13 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
         const images: string[] = []
         for (const image of data) {
-            let img = ''
-            image.toString().startsWith('//') ? img = `https:${image}` : img = image
+            let img = image.toString()
+            if (img.includes('https://telegra.ph/')) {
+                img = 'https://wsrv.nl/?url=' + img
+            }
+            if (img.startsWith('//')) {
+                img = 'https:' + img
+            }
             img = img.replace('http:', 'https:')
             images.push(img)
         }
