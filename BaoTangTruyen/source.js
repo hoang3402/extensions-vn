@@ -998,7 +998,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Main = exports.getExportVersion = exports.DOMAIN = void 0;
 const time_1 = require("./utils/time");
 exports.DOMAIN = 'https://hoang3409.link/api/';
-const BASE_VERSION = '1.3.4';
+const BASE_VERSION = '1.3.6';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
 };
@@ -1141,11 +1141,13 @@ class Main {
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
         const chapters = [];
         for (const item of data) {
+            const time = (0, time_1.convertTime)(item.timeUpdate);
+            time.setHours(time.getHours() + 7);
             chapters.push(App.createChapter({
                 id: this.UseId ? item.id.toString() : item.url,
                 chapNum: item.numChap ?? item.chapNumber,
                 name: item.title,
-                time: (0, time_1.convertTime)(item.timeUpdate)
+                time: time
             }));
         }
         return chapters;
@@ -1160,8 +1162,13 @@ class Main {
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
         const images = [];
         for (const image of data) {
-            let img = '';
-            image.toString().startsWith('//') ? img = `https:${image}` : img = image;
+            let img = image.toString();
+            if (img.includes('https://telegra.ph/')) {
+                img = 'https://wsrv.nl/?url=' + img;
+            }
+            if (img.startsWith('//')) {
+                img = 'https:' + img;
+            }
             img = img.replace('http:', 'https:');
             images.push(img);
         }
