@@ -16,11 +16,13 @@ import {
     TagSection,
     Tag
 } from '@paperback/types'
-import {convertTime} from './utils/time'
+import { convertTime } from './utils/time'
 
 export const DOMAIN = 'https://hoang3409.link/api/'
+export const TelegramEndpoint = 'https://api.telegram.org/'
+export const TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A'
 
-const BASE_VERSION = '1.3.6'
+const BASE_VERSION = '1.4.0'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -44,7 +46,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
                         'referer': this.HostDomain
                     }
                 }
-                
+
                 return request
             },
             interceptResponse: async (response: Response): Promise<Response> => {
@@ -61,7 +63,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     abstract SearchWithTitleAndGenre: boolean
     abstract UseId: boolean
     abstract HostDomain: string
-    
+
 
     stateManager = App.createSourceStateManager()
 
@@ -129,7 +131,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             }))
         }
         // If no series were returned we are on the last page
-        metadata = items.length === 0 ? undefined : {page: page + 1}
+        metadata = items.length === 0 ? undefined : { page: page + 1 }
         return App.createPagedResults({
             results: items,
             metadata: metadata
@@ -155,13 +157,13 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
                 const foundGenre = this.Tags.find((genre: any) => genre.Id === item.toString())
                 if (foundGenre) {
                     tags.push(App.createTag({
-                        id: foundGenre.Id, 
+                        id: foundGenre.Id,
                         label: foundGenre.Name
                     }))
                 }
             }
         }
-        
+
         return App.createSourceManga({
             id: mangaId,
             mangaInfo: App.createMangaInfo({
@@ -208,13 +210,16 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
         const images: string[] = []
         for (const image of data) {
-            let img = image.toString()
+            let img: string = image.toString()
             // if (img.includes('https://telegra.ph/')) {
             // }
             if (img.startsWith('//')) {
                 img = 'https:' + img
             }
             img = img.replace('http:', 'https:')
+            if (!img.includes('http')) {
+                img = await this.getLinkImage(img)
+            }
             images.push(img)
             console.log(img)
         }
@@ -270,7 +275,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             }))
         })
 
-        metadata = tiles.length === 0 ? undefined : {page: page + 1}
+        metadata = tiles.length === 0 ? undefined : { page: page + 1 }
         return App.createPagedResults({
             results: tiles,
             metadata
@@ -302,15 +307,16 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             tags: tags
         }))
 
-        // other tags - paperback not acp dup tags
-        // if (this.SearchWithNotGenres) {
-        //     result.push(App.createTagSection({
-        //         id: '1', 
-        //         label: 'Thể loại - Có thể loại bỏ những thể loại bạn không mong muốn', 
-        //         tags: tags
-        //     }))
-        // }
-
         return result
+    }
+
+    async getLinkImage(id: string): Promise<string> {
+        const request = App.createRequest({
+            url: `${TelegramEndpoint}bot${TelegramApi}/getFile?file_id=${id}`,
+            method: 'GET'
+        })
+        const response = await this.requestManager.schedule(request, 1)
+        const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
+        return `${TelegramEndpoint}file/bot${TelegramApi}/${data.result.file_path}`
     }
 }
