@@ -22,7 +22,7 @@ export const DOMAIN = 'https://hoang3409.link/api/'
 export const TelegramEndpoint = 'https://api.telegram.org/'
 export const TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A'
 
-const BASE_VERSION = '1.4.0'
+const BASE_VERSION = '1.4.1'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -84,8 +84,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             let apiPath: string, params: string
             switch (section.id) {
                 default:
-                    apiPath = `${DOMAIN}${this.Host}`
-                    params = '?page=1'
+                    apiPath = `${DOMAIN}AnimeMoi`
+                    params = `?host=${this.Host}&page=1`
                     break
             }
             const request = App.createRequest({
@@ -115,8 +115,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     async getViewMoreItems(homepageSectionId: string, metadata: any): Promise<PagedResults> {
         const page: number = metadata?.page ?? 1
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}`,
-            param: `?page=${page}`,
+            url: `${DOMAIN}AnimeMoi`,
+            param: `?host=${this.Host}&page=${page}`,
             method: 'GET'
         })
         const data = await this.requestManager.schedule(request, 1)
@@ -139,9 +139,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     }
 
     async getMangaDetails(mangaId: string): Promise<SourceManga> {
-        // mangaId like "gokusotsu-kraken-72204"
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+            url: `${DOMAIN}AnimeMoi/Manga?idComic=${mangaId}`,
             method: 'GET'
         })
 
@@ -180,8 +179,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
 
     async getChapters(mangaId: string): Promise<Chapter[]> {
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/Chapter`,
-            param: `?url=${mangaId}`,
+            url: `${DOMAIN}AnimeMoi/Chapter`,
+            param: `?idComic=${mangaId}`,
             method: 'GET'
         })
         const response = await this.requestManager.schedule(request, 1)
@@ -202,8 +201,8 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
 
     async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
         const request = App.createRequest({
-            url: `${DOMAIN}${this.Host}/ChapterDetail`,
-            param: `?url=${chapterId}`,
+            url: `${DOMAIN}AnimeMoi/ChapterDetail`,
+            param: `?idChapter=${chapterId}`,
             method: 'GET'
         })
         const response = await this.requestManager.schedule(request, 1)
@@ -211,8 +210,6 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         const images: string[] = []
         for (const image of data) {
             let img: string = image.toString()
-            // if (img.includes('https://telegra.ph/')) {
-            // }
             if (img.startsWith('//')) {
                 img = 'https:' + img
             }
@@ -256,7 +253,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
 
         const request = App.createRequest({
             method: 'POST',
-            url: `${DOMAIN}${this.Host}/Search`,
+            url: `${DOMAIN}AnimeMoi/Search?host=${this.Host}`,
             data: postData,
             headers: {
                 'Content-Type': 'application/json'
