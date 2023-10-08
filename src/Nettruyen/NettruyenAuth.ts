@@ -1,4 +1,4 @@
-import {SourceStateManager} from '@paperback/types'
+import { SourceStateManager } from '@paperback/types'
 
 export const STATE_SESSION = 'token'
 export const STATE_REFRESH_SESSION = 'refresh token'
@@ -62,7 +62,7 @@ export async function setSessionToken(stateManager: SourceStateManager, sessionT
         console.log(`tried to store invalid token: ${sessionToken}`)
         throw new Error('tried to store invalid token')
     }
-    
+
     await stateManager.keychain.store(STATE_SESSION, sessionToken.idToken)
     await stateManager.keychain.store(STATE_REFRESH_SESSION, sessionToken.refreshToken)
 }

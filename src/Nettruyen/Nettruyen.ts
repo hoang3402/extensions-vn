@@ -24,7 +24,7 @@ import {
     getLoginTime,
     getSessionRefreshToken,
     getSessionToken,
-    getUserCredentials, 
+    getUserCredentials,
     setLoginTime,
     setSessionToken,
     setUserCredentials,
@@ -53,7 +53,7 @@ export const NettruyenInfo: SourceInfo = {
     intents: SourceIntents.HOMEPAGE_SECTIONS | SourceIntents.MANGA_CHAPTERS | SourceIntents.MANGA_TRACKING | SourceIntents.SETTINGS_UI
 }
 
-export class Nettruyen extends Main implements MangaProgressProviding{
+export class Nettruyen extends Main implements MangaProgressProviding {
     Host = HOST
     Tags = tags
 
@@ -91,12 +91,12 @@ export class Nettruyen extends Main implements MangaProgressProviding{
     async getSourceMenu(): Promise<DUISection> {
         return App.createDUISection({
             id: 'sourceMenu',
-            isHidden: false, 
-            rows: async () =>  {
+            isHidden: false,
+            rows: async () => {
                 const [credentials] = await Promise.all([
                     getUserCredentials(this.stateManager)
                 ])
-                
+
                 if (credentials?.email) {
                     return [
                         App.createDUILabel({
@@ -179,7 +179,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
 
         try {
             const request = App.createRequest({
-                method: 'POST', 
+                method: 'POST',
                 url: `${DOMAIN}Auth/Login?email=${credentials.email}&password=${credentials.password}`
             })
             const result = await this.requestManager.schedule(request, 1)
@@ -194,7 +194,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                 setSessionToken(this.stateManager, sessionToken),
                 setLoginTime(this.stateManager)
             ])
-            
+
             console.log(`${logPrefix} complete`)
         } catch (e: any) {
             console.log(`${logPrefix} failed to log in`)
@@ -216,7 +216,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             console.log(`${logPrefix} no credentials available, unable to refresh`)
             throw new Error('Could not find login credentials!')
         }
-        
+
         const refreshToken = await getSessionRefreshToken(this.stateManager)
         if (!refreshToken) {
             console.log(`${logPrefix} no refresh token available, unable to refresh`)
@@ -236,7 +236,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
 
         console.log(`${logPrefix} complete`)
     }
-    
+
     async getMangaProgress(mangaId: string): Promise<MangaProgress | undefined> {
         const logPrefix = '[getMangaProgress]'
         console.log(`${logPrefix} starts`)
@@ -249,8 +249,8 @@ export class Nettruyen extends Main implements MangaProgressProviding{
             }), 1)
             const result = typeof request.data === 'string' ? JSON.parse(request.data) : request.data
 
-            if (!result || result.length < 1) return undefined 
-            
+            if (!result || result.length < 1) return undefined
+
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
                 lastReadChapterNumber: result[0].currentChapterNumber ?? 0
@@ -279,7 +279,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                     }), 1)
                 ])
                 const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
-                
+
                 if (credentials == null) {
                     return [
                         App.createDUISection({
@@ -326,7 +326,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                             App.createDUILabel({
                                 id: 'mangaProcess',
                                 label: 'Đang đọc',
-                                value: processInfo!.lastReadChapterNumber.toString()
+                                value: processInfo === undefined ? '0' : processInfo.lastReadChapterNumber.toString()
                             }),
                             App.createDUILabel({
                                 id: 'mangaStatus',
@@ -347,12 +347,11 @@ export class Nettruyen extends Main implements MangaProgressProviding{
 
     async processChapterReadActionQueue(actionQueue: TrackerActionQueue): Promise<void> {
         await this.refreshSession()
-        
+
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
         for (const readAction of chapterReadActions) {
             console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`)
-            try 
-            {
+            try {
                 const _response = await this.requestManager.schedule(App.createRequest({
                     url: `${DOMAIN}Service/SaveProcess?idComic=${readAction.mangaId}&idChapter=${readAction.sourceChapterId}`,
                     method: 'GET'
@@ -360,7 +359,7 @@ export class Nettruyen extends Main implements MangaProgressProviding{
                 const data = typeof _response.data === 'string' ? JSON.parse(_response.data) : _response.data
                 if (data.message === 'Success') {
                     console.log(`Save success ${readAction.mangaId}`)
-                } 
+                }
             }
             catch (error) {
                 console.log(error)
