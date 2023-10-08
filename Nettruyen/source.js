@@ -465,7 +465,7 @@ const time_1 = require("./utils/time");
 exports.DOMAIN = 'https://hoang3409.link/api/';
 exports.TelegramEndpoint = 'https://api.telegram.org/';
 exports.TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A';
-const BASE_VERSION = '1.4.0';
+const BASE_VERSION = '1.4.1';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
 };
@@ -510,8 +510,8 @@ class Main {
             let apiPath, params;
             switch (section.id) {
                 default:
-                    apiPath = `${exports.DOMAIN}${this.Host}`;
-                    params = '?page=1';
+                    apiPath = `${exports.DOMAIN}AnimeMoi`;
+                    params = `?host=${this.Host}&page=1`;
                     break;
             }
             const request = App.createRequest({
@@ -539,8 +539,8 @@ class Main {
     async getViewMoreItems(homepageSectionId, metadata) {
         const page = metadata?.page ?? 1;
         const request = App.createRequest({
-            url: `${exports.DOMAIN}${this.Host}`,
-            param: `?page=${page}`,
+            url: `${exports.DOMAIN}AnimeMoi`,
+            param: `?host=${this.Host}&page=${page}`,
             method: 'GET'
         });
         const data = await this.requestManager.schedule(request, 1);
@@ -562,9 +562,8 @@ class Main {
         });
     }
     async getMangaDetails(mangaId) {
-        // mangaId like "gokusotsu-kraken-72204"
         const request = App.createRequest({
-            url: `${exports.DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+            url: `${exports.DOMAIN}AnimeMoi/Manga?idComic=${mangaId}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -600,8 +599,8 @@ class Main {
     }
     async getChapters(mangaId) {
         const request = App.createRequest({
-            url: `${exports.DOMAIN}${this.Host}/Chapter`,
-            param: `?url=${mangaId}`,
+            url: `${exports.DOMAIN}AnimeMoi/Chapter`,
+            param: `?idComic=${mangaId}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -621,8 +620,8 @@ class Main {
     }
     async getChapterDetails(mangaId, chapterId) {
         const request = App.createRequest({
-            url: `${exports.DOMAIN}${this.Host}/ChapterDetail`,
-            param: `?url=${chapterId}`,
+            url: `${exports.DOMAIN}AnimeMoi/ChapterDetail`,
+            param: `?idChapter=${chapterId}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -630,8 +629,6 @@ class Main {
         const images = [];
         for (const image of data) {
             let img = image.toString();
-            // if (img.includes('https://telegra.ph/')) {
-            // }
             if (img.startsWith('//')) {
                 img = 'https:' + img;
             }
@@ -672,7 +669,7 @@ class Main {
         }
         const request = App.createRequest({
             method: 'POST',
-            url: `${exports.DOMAIN}${this.Host}/Search`,
+            url: `${exports.DOMAIN}AnimeMoi/Search?host=${this.Host}`,
             data: postData,
             headers: {
                 'Content-Type': 'application/json'
@@ -1016,7 +1013,7 @@ class Nettruyen extends Main_1.Main {
                             App.createDUILabel({
                                 id: 'mangaProcess',
                                 label: 'Đang đọc',
-                                value: processInfo.lastReadChapterNumber.toString()
+                                value: processInfo === undefined ? '0' : processInfo.lastReadChapterNumber.toString()
                             }),
                             App.createDUILabel({
                                 id: 'mangaStatus',
