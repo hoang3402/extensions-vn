@@ -1161,8 +1161,7 @@ class Main {
         });
         const response = await this.requestManager.schedule(request, 1);
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
-        const images = [];
-        for (const image of data) {
+        const imagePromises = data.map(async (image) => {
             let img = image.toString();
             if (img.startsWith('//')) {
                 img = 'https:' + img;
@@ -1171,9 +1170,9 @@ class Main {
             if (!img.includes('http')) {
                 img = await this.getLinkImage(img);
             }
-            images.push(img);
-            console.log(img);
-        }
+            return img;
+        });
+        const images = await Promise.all(imagePromises);
         return App.createChapterDetails({
             id: chapterId,
             mangaId: mangaId,
