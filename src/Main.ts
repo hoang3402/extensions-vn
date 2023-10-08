@@ -207,8 +207,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
         })
         const response = await this.requestManager.schedule(request, 1)
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
-        const images: string[] = []
-        for (const image of data) {
+        const imagePromises = data.map(async (image: string) => {
             let img: string = image.toString()
             if (img.startsWith('//')) {
                 img = 'https:' + img
@@ -217,9 +216,10 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             if (!img.includes('http')) {
                 img = await this.getLinkImage(img)
             }
-            images.push(img)
-            console.log(img)
-        }
+            return img
+        })
+
+        const images = await Promise.all(imagePromises)
 
         return App.createChapterDetails({
             id: chapterId,
