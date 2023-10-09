@@ -39,7 +39,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.3.5'),
+    version: getExportVersion('0.3.6'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -274,7 +274,7 @@ export class Nettruyen extends Main implements MangaProgressProviding {
                 ])
                 const [response] = await Promise.all([
                     this.requestManager.schedule(App.createRequest({
-                        url: `${DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+                        url: `${DOMAIN}AnimeMoi/Manga?host=${this.Host}&url=${mangaId}`,
                         method: 'GET'
                     }), 1)
                 ])
