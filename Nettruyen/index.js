@@ -746,7 +746,7 @@ exports.NettruyenInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.3.5'),
+    version: (0, Main_1.getExportVersion)('0.3.6'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -962,7 +962,7 @@ class Nettruyen extends Main_1.Main {
                 ]);
                 const [response] = await Promise.all([
                     this.requestManager.schedule(App.createRequest({
-                        url: `${Main_1.DOMAIN}${this.Host}/Manga?url=${mangaId}`,
+                        url: `${Main_1.DOMAIN}AnimeMoi/Manga?host=${this.Host}&url=${mangaId}`,
                         method: 'GET'
                     }), 1)
                 ]);
