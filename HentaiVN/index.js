@@ -1369,7 +1369,7 @@ const time_1 = require("./utils/time");
 exports.DOMAIN = 'https://hoang3409.link/api/';
 exports.TelegramEndpoint = 'https://api.telegram.org/';
 exports.TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A';
-const BASE_VERSION = '1.4.1';
+const BASE_VERSION = '1.4.2';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
 };
@@ -1537,7 +1537,7 @@ class Main {
             }
             img = img.replace('http:', 'https:');
             if (!img.includes('http')) {
-                img = await this.getLinkImage(img);
+                return await this.getLinkImage(img);
             }
             return img;
         });
@@ -1626,7 +1626,7 @@ class Main {
             url: `${exports.TelegramEndpoint}bot${exports.TelegramApi}/getFile?file_id=${id}`,
             method: 'GET'
         });
-        const response = await this.requestManager.schedule(request, 1);
+        const response = await this.requestManager.schedule(request, 0);
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
         return `${exports.TelegramEndpoint}file/bot${exports.TelegramApi}/${data.result.file_path}`;
     }
