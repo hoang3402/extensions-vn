@@ -22,7 +22,7 @@ export const DOMAIN = 'https://hoang3409.link/api/'
 export const TelegramEndpoint = 'https://api.telegram.org/'
 export const TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A'
 
-const BASE_VERSION = '1.4.1'
+const BASE_VERSION = '1.4.2'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -214,7 +214,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             }
             img = img.replace('http:', 'https:')
             if (!img.includes('http')) {
-                img = await this.getLinkImage(img)
+                return await this.getLinkImage(img)
             }
             return img
         })
@@ -312,7 +312,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
             url: `${TelegramEndpoint}bot${TelegramApi}/getFile?file_id=${id}`,
             method: 'GET'
         })
-        const response = await this.requestManager.schedule(request, 1)
+        const response = await this.requestManager.schedule(request, 0)
         const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
         return `${TelegramEndpoint}file/bot${TelegramApi}/${data.result.file_path}`
     }

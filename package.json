@@ -8,7 +8,7 @@
     "serve": "npx paperback serve",
     "test": "npx paperback test",
     "nodemon": "nodemon",
-    "log": "paperback logcat --ip=192.168.1.3"
+    "log": "paperback logcat --ip=192.168.1.2"
   },
   "author": "Hoang3402",
   "license": "GPL-3.0-or-later",
