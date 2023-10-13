@@ -22,7 +22,7 @@ export const DOMAIN = 'https://hoang3409.link/api/'
 export const TelegramEndpoint = 'https://api.telegram.org/'
 export const TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A'
 
-const BASE_VERSION = '1.4.2'
+const BASE_VERSION = '1.5.0'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
@@ -140,7 +140,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
 
     async getMangaDetails(mangaId: string): Promise<SourceManga> {
         const request = App.createRequest({
-            url: `${DOMAIN}AnimeMoi/Manga?idComic=${mangaId}`,
+            url: `${DOMAIN}AnimeMoi/Manga?idComic=${mangaId}&host=${this.Host}`,
             method: 'GET'
         })
 
@@ -180,7 +180,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     async getChapters(mangaId: string): Promise<Chapter[]> {
         const request = App.createRequest({
             url: `${DOMAIN}AnimeMoi/Chapter`,
-            param: `?idComic=${mangaId}`,
+            param: `?idComic=${mangaId}&host=${this.Host}`,
             method: 'GET'
         })
         const response = await this.requestManager.schedule(request, 1)
@@ -202,7 +202,7 @@ export abstract class Main implements SearchResultsProviding, MangaProviding, Ch
     async getChapterDetails(mangaId: string, chapterId: string): Promise<ChapterDetails> {
         const request = App.createRequest({
             url: `${DOMAIN}AnimeMoi/ChapterDetail`,
-            param: `?idChapter=${chapterId}`,
+            param: `?idChapter=${chapterId}&host=${this.Host}`,
             method: 'GET'
         })
         const response = await this.requestManager.schedule(request, 1)
