@@ -796,7 +796,7 @@ const time_1 = require("./utils/time");
 exports.DOMAIN = 'https://hoang3409.link/api/';
 exports.TelegramEndpoint = 'https://api.telegram.org/';
 exports.TelegramApi = '6690512898:AAFvzwcfQ1axac2bDrTpRZDU4p3gFh_Gh1A';
-const BASE_VERSION = '1.4.2';
+const BASE_VERSION = '1.5.0';
 const getExportVersion = (EXTENSION_VERSION) => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.');
 };
@@ -894,7 +894,7 @@ class Main {
     }
     async getMangaDetails(mangaId) {
         const request = App.createRequest({
-            url: `${exports.DOMAIN}AnimeMoi/Manga?idComic=${mangaId}`,
+            url: `${exports.DOMAIN}AnimeMoi/Manga?idComic=${mangaId}&host=${this.Host}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -931,7 +931,7 @@ class Main {
     async getChapters(mangaId) {
         const request = App.createRequest({
             url: `${exports.DOMAIN}AnimeMoi/Chapter`,
-            param: `?idComic=${mangaId}`,
+            param: `?idComic=${mangaId}&host=${this.Host}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
@@ -952,7 +952,7 @@ class Main {
     async getChapterDetails(mangaId, chapterId) {
         const request = App.createRequest({
             url: `${exports.DOMAIN}AnimeMoi/ChapterDetail`,
-            param: `?idChapter=${chapterId}`,
+            param: `?idChapter=${chapterId}&host=${this.Host}`,
             method: 'GET'
         });
         const response = await this.requestManager.schedule(request, 1);
