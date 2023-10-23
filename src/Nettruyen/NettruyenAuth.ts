@@ -58,7 +58,7 @@ export async function getSessionRefreshToken(stateManager: SourceStateManager): 
 }
 
 export async function setSessionToken(stateManager: SourceStateManager, sessionToken: any): Promise<void> {
-    if (!sessionToken.idToken || !sessionToken.refreshToken) {
+    if (!sessionToken['idToken'] || !sessionToken['refreshToken']) {
         console.log(`tried to store invalid token: ${sessionToken}`)
         throw new Error('tried to store invalid token')
     }

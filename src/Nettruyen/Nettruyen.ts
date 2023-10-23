@@ -31,6 +31,7 @@ import {
     validateCredentials
 } from './NettruyenAuth'
 import tags from './tags.json'
+import {TrackedMangaChapterReadAction} from '@paperback/types/lib'
 
 const HOST = 'NetTruyen'
 const Domain = 'www.nettruyenus.com'
@@ -39,7 +40,7 @@ export const NettruyenInfo: SourceInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: getExportVersion('0.3.6'),
+    version: getExportVersion('0.4.0'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -253,7 +254,7 @@ export class Nettruyen extends Main implements MangaProgressProviding {
 
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
-                lastReadChapterNumber: result[0].currentChapterNumber ?? 0
+                lastReadChapterNumber: result['currentChapterNumber'] ?? 0
             })
 
             console.log(`${logPrefix} complete`)
@@ -268,16 +269,15 @@ export class Nettruyen extends Main implements MangaProgressProviding {
     async getMangaProgressManagementForm(mangaId: string): Promise<DUIForm> {
         return App.createDUIForm({
             sections: async () => {
-                const [credentials, processInfo] = await Promise.all([
+                const [credentials, processInfo, response] = await Promise.all([
                     getUserCredentials(this.stateManager),
-                    this.getMangaProgress(mangaId)
-                ])
-                const [response] = await Promise.all([
+                    this.getMangaProgress(mangaId),
                     this.requestManager.schedule(App.createRequest({
-                        url: `${DOMAIN}AnimeMoi/Manga?host=${this.Host}&url=${mangaId}`,
+                        url: `${DOMAIN}AnimeMoi/Manga?host=${this.Host}&idComic=${mangaId}`,
                         method: 'GET'
                     }), 1)
                 ])
+
                 const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
 
                 if (credentials == null) {
@@ -314,7 +314,7 @@ export class Nettruyen extends Main implements MangaProgressProviding {
                         isHidden: false,
                         rows: async () => [
                             App.createDUILabel({
-                                id: 'mediaId',
+                                id: 'comicId',
                                 label: 'Id',
                                 value: data.id?.toString()
                             }),
@@ -335,8 +335,8 @@ export class Nettruyen extends Main implements MangaProgressProviding {
                             }),
                             App.createDUILabel({
                                 id: 'lastTimeUpdate',
-                                value: new Date(data.lastTimeUpdate).toTimeString(),
-                                label: 'Cập nhật'
+                                value: new Date(data['lastTimeUpdate']).toTimeString(),
+                                label: 'Cập nhật mới nhất'
                             })
                         ]
                     })
@@ -349,22 +349,34 @@ export class Nettruyen extends Main implements MangaProgressProviding {
         await this.refreshSession()
 
         const chapterReadActions = await actionQueue.queuedChapterReadActions()
+        const chapterMap = new Map<string, TrackedMangaChapterReadAction>()
+
         for (const readAction of chapterReadActions) {
-            console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`)
+            const currentChapter = readAction
+
+            if (!chapterMap.has(readAction.mangaId) ||
+                currentChapter.chapterNumber > chapterMap.get(currentChapter.mangaId).chapterNumber) {
+                chapterMap.set(readAction.mangaId, currentChapter)
+            }
+        }
+
+        for (const readAction of chapterMap) {
+            const read = readAction[1]
+            console.log(`readAction.mangaId: ${read.mangaId} | ${read.sourceChapterId}`)
             try {
                 const _response = await this.requestManager.schedule(App.createRequest({
-                    url: `${DOMAIN}Service/SaveProcess?idComic=${readAction.mangaId}&idChapter=${readAction.sourceChapterId}`,
+                    url: `${DOMAIN}Service/SaveProcess?idComic=${read.mangaId}&idChapter=${read.sourceChapterId}`,
                     method: 'GET'
                 }), 1)
                 const data = typeof _response.data === 'string' ? JSON.parse(_response.data) : _response.data
                 if (data.message === 'Success') {
-                    console.log(`Save success ${readAction.mangaId}`)
+                    console.log(`Save success ${read.mangaId}`)
                 }
             }
             catch (error) {
                 console.log(error)
-                console.log(`Save failed ${readAction.mangaId}`)
-                await actionQueue.retryChapterReadAction(readAction)
+                console.log(`Save failed ${read.mangaId}`)
+                await actionQueue.retryChapterReadAction(readAction[1])
             }
         }
     }
