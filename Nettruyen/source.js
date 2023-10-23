@@ -746,7 +746,7 @@ exports.NettruyenInfo = {
     description: '',
     icon: 'icon.jpg',
     websiteBaseURL: '',
-    version: (0, Main_1.getExportVersion)('0.3.6'),
+    version: (0, Main_1.getExportVersion)('0.4.0'),
     name: 'Nettruyen',
     language: 'vi',
     author: 'Hoang3409',
@@ -942,7 +942,7 @@ class Nettruyen extends Main_1.Main {
                 return undefined;
             const progress = App.createMangaProgress({
                 mangaId: mangaId,
-                lastReadChapterNumber: result[0].currentChapterNumber ?? 0
+                lastReadChapterNumber: result['currentChapterNumber'] ?? 0
             });
             console.log(`${logPrefix} complete`);
             return progress;
@@ -956,13 +956,11 @@ class Nettruyen extends Main_1.Main {
     async getMangaProgressManagementForm(mangaId) {
         return App.createDUIForm({
             sections: async () => {
-                const [credentials, processInfo] = await Promise.all([
+                const [credentials, processInfo, response] = await Promise.all([
                     (0, NettruyenAuth_1.getUserCredentials)(this.stateManager),
-                    this.getMangaProgress(mangaId)
-                ]);
-                const [response] = await Promise.all([
+                    this.getMangaProgress(mangaId),
                     this.requestManager.schedule(App.createRequest({
-                        url: `${Main_1.DOMAIN}AnimeMoi/Manga?host=${this.Host}&url=${mangaId}`,
+                        url: `${Main_1.DOMAIN}AnimeMoi/Manga?host=${this.Host}&idComic=${mangaId}`,
                         method: 'GET'
                     }), 1)
                 ]);
@@ -1000,7 +998,7 @@ class Nettruyen extends Main_1.Main {
                         isHidden: false,
                         rows: async () => [
                             App.createDUILabel({
-                                id: 'mediaId',
+                                id: 'comicId',
                                 label: 'Id',
                                 value: data.id?.toString()
                             }),
@@ -1021,8 +1019,8 @@ class Nettruyen extends Main_1.Main {
                             }),
                             App.createDUILabel({
                                 id: 'lastTimeUpdate',
-                                value: new Date(data.lastTimeUpdate).toTimeString(),
-                                label: 'Cập nhật'
+                                value: new Date(data['lastTimeUpdate']).toTimeString(),
+                                label: 'Cập nhật mới nhất'
                             })
                         ]
                     })
@@ -1033,22 +1031,31 @@ class Nettruyen extends Main_1.Main {
     async processChapterReadActionQueue(actionQueue) {
         await this.refreshSession();
         const chapterReadActions = await actionQueue.queuedChapterReadActions();
+        const chapterMap = new Map();
         for (const readAction of chapterReadActions) {
-            console.log(`readAction.mangaId: ${readAction.mangaId} | ${readAction.sourceChapterId}`);
+            const currentChapter = readAction;
+            if (!chapterMap.has(readAction.mangaId) ||
+                currentChapter.chapterNumber > chapterMap.get(currentChapter.mangaId).chapterNumber) {
+                chapterMap.set(readAction.mangaId, currentChapter);
+            }
+        }
+        for (const readAction of chapterMap) {
+            const read = readAction[1];
+            console.log(`readAction.mangaId: ${read.mangaId} | ${read.sourceChapterId}`);
             try {
                 const _response = await this.requestManager.schedule(App.createRequest({
-                    url: `${Main_1.DOMAIN}Service/SaveProcess?idComic=${readAction.mangaId}&idChapter=${readAction.sourceChapterId}`,
+                    url: `${Main_1.DOMAIN}Service/SaveProcess?idComic=${read.mangaId}&idChapter=${read.sourceChapterId}`,
                     method: 'GET'
                 }), 1);
                 const data = typeof _response.data === 'string' ? JSON.parse(_response.data) : _response.data;
                 if (data.message === 'Success') {
-                    console.log(`Save success ${readAction.mangaId}`);
+                    console.log(`Save success ${read.mangaId}`);
                 }
             }
             catch (error) {
                 console.log(error);
-                console.log(`Save failed ${readAction.mangaId}`);
-                await actionQueue.retryChapterReadAction(readAction);
+                console.log(`Save failed ${read.mangaId}`);
+                await actionQueue.retryChapterReadAction(readAction[1]);
             }
         }
     }
@@ -1106,7 +1113,7 @@ async function getSessionRefreshToken(stateManager) {
 }
 exports.getSessionRefreshToken = getSessionRefreshToken;
 async function setSessionToken(stateManager, sessionToken) {
-    if (!sessionToken.idToken || !sessionToken.refreshToken) {
+    if (!sessionToken['idToken'] || !sessionToken['refreshToken']) {
         console.log(`tried to store invalid token: ${sessionToken}`);
         throw new Error('tried to store invalid token');
     }
