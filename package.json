@@ -1,6 +1,7 @@
 {
   "name": "extensions-vn",
   "version": "1.2.0",
+  "repositoryName": "Extensions-VN (0.8)",
   "description": "Extensions for Vietnamese!",
   "main": "index.js",
   "scripts": {
