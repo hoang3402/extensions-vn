@@ -22,7 +22,7 @@ export const DOMAIN = 'https://hoang3409.link/api/'
 export const TelegramEndpoint = 'https://api.telegram.org/'
 export const TelegramApi = '6458222681:AAEy9Q-qHskCvymzy3JYWxu-uM1jdC16cdk'
 
-const BASE_VERSION = '1.5.1'
+const BASE_VERSION = '1.5.2'
 export const getExportVersion = (EXTENSION_VERSION: string): string => {
     return BASE_VERSION.split('.').map((x, index) => Number(x) + Number(EXTENSION_VERSION.split('.')[index])).join('.')
 }
