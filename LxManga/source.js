@@ -922,7 +922,7 @@ class Main {
         const data = await this.requestManager.schedule(request, 1);
         const result = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
         const items = [];
-        for (const item of result.mangas) {
+        for (const item of result) {
             items.push(App.createPartialSourceManga({
                 title: item.titles[0],
                 image: item.cover,
